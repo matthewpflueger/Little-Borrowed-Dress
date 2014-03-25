@@ -1,0 +1,65 @@
+{
+  "name": "Little-Borrowed-Dress",
+  "version": "0.1.0",
+  "dependencies": {
+    "express": "~4.0.0",
+    "browserify-middleware": "~2.4.0",
+    "less-middleware": "^0.2.1-beta",
+    "winston": "^0.7.2",
+    "node-logentries": "^0.1.4",
+    "morgan": "^1.0.0",
+    "body-parser": "^1.0.1",
+    "method-override": "^1.0.0",
+    "busboy": "^0.2.3",
+    "fast-csv": "^0.2.2",
+    "mongoose": "^3.8.8",
+    "rx": "^2.2.17",
+    "rabbit.js": "^0.4.1",
+    "nconf": "^0.6.9"
+  },
+  "devDependencies": {
+    "jasmine-node": "~1.14.2",
+    "istanbul": "~0.2.6",
+    "karma-coverage": "~0.2",
+    "karma-script-launcher": "~0.1.0",
+    "karma-chrome-launcher": "~0.1.2",
+    "karma-html2js-preprocessor": "~0.1.0",
+    "karma-firefox-launcher": "~0.1.3",
+    "karma-jasmine": "~0.2",
+    "karma-phantomjs-launcher": "~0.1.2",
+    "karma": "~0.12",
+    "plato": "~1.0.1",
+    "complexity-report": "~1.0.2",
+    "jshint": "~2.4.4",
+    "protractor": "~0.20.1",
+    "napa": "~0.4.1",
+    "browserify": "~3.32.1",
+    "nodemon": "~1.0.16"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "install": "napa",
+    "start": "node server",
+    "test": "istanbul test jasmine-node spec/",
+    "cover": "istanbul cover jasmine-node spec/",
+    "check-coverage": "istanbul check-coverage --statement -2 --branch 100 --function -2 --lines -2",
+    "karma": "karma start spec/client/karma.conf.js",
+    "karma-single": "karma start --single-run --no-auto-watch spec/client/karma.conf.js",
+    "plato-client": "mkdir -p build/client/analysis && plato -r -d build/client/analysis -l .jshintrc -t 'Client Code Complexity' client/scripts",
+    "plato-server": "mkdir -p build/server/analysis && plato -r -d build/server/analysis -l .jshintrc -t 'Server Code Complexity' server;",
+    "cr-client": "mkdir -p build/client/analysis && cr -n -M 60 -f json -o build/client/analysis/cr.json client/scripts/*",
+    "cr-server": "mkdir -p build/server/analysis && cr -n -M 60 -f json -o build/server/analysis/cr.json server/*",
+    "jshint-client": "jshint client/scripts/*",
+    "jshint-server": "jshint server/*",
+    "jshint": "npm run jshint-client && npm run jshint-server"
+  },
+  "napa": {
+    "bootstrap": "https://github.com/twbs/bootstrap/archive/v3.1.1.tar.gz",
+    "jquery": "https://github.com/jquery/jquery/archive/2.1.0.tar.gz",
+    "angular": "https://github.com/angular/bower-angular/archive/v1.3.0-beta.3.tar.gz",
+    "angular-route": "https://github.com/angular/bower-angular-route/archive/v1.3.0-beta.3.tar.gz",
+    "ng-upload": "https://github.com/twilson63/ngUpload/archive/v0.5.9.tar.gz"
+  }
+}

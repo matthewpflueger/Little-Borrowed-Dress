@@ -15,7 +15,18 @@
     "mongoose": "^3.8.8",
     "rx": "^2.2.17",
     "rabbit.js": "^0.4.1",
-    "nconf": "^0.6.9"
+    "nconf": "^0.6.9",
+    "cookie-session": "^1.0.1",
+    "cookies": "^0.4.0",
+    "connect-flash": "^0.1.1",
+    "passport": "^0.2.0",
+    "passport-local": "^1.0.0",
+    "consolidate": "^0.10.0",
+    "swig": "^1.3.2",
+    "csurf": "^1.0.0",
+    "lodash": "^2.4.1",
+    "view-helpers": "^0.1.4",
+    "node-uuid": "^1.4.1"
   },
   "devDependencies": {
     "jasmine-node": "~1.14.2",
@@ -56,10 +67,15 @@
     "jshint": "npm run jshint-client && npm run jshint-server"
   },
   "napa": {
-    "bootstrap": "https://github.com/twbs/bootstrap/archive/v3.1.1.tar.gz",
     "jquery": "https://github.com/jquery/jquery/archive/2.1.0.tar.gz",
+    "bootstrap": "https://github.com/twbs/bootstrap/archive/v3.0.3.tar.gz",
     "angular": "https://github.com/angular/bower-angular/archive/v1.3.0-beta.3.tar.gz",
     "angular-route": "https://github.com/angular/bower-angular-route/archive/v1.3.0-beta.3.tar.gz",
-    "ng-upload": "https://github.com/twilson63/ngUpload/archive/v0.5.9.tar.gz"
+    "angular-cookies": "https://github.com/angular/bower-angular-cookies/archive/v1.3.0-beta.3.tar.gz",
+    "angular-resource": "https://github.com/angular/bower-angular-resource/archive/v1.3.0-beta.3.tar.gz",
+    "angular-ui-bootstrap": "https://github.com/angular-ui/bootstrap-bower/archive/0.10.0.tar.gz",
+    "angular-ui-router": "https://github.com/angular-ui/ui-router/archive/0.2.8.tar.gz",
+    "ng-upload": "https://github.com/twilson63/ngUpload/archive/v0.5.9.tar.gz",
+    "ng-grid": "https://github.com/angular-ui/ng-grid/archive/v2.0.7.tar.gz"
   }
 }

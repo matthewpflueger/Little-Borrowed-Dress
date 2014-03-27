@@ -19,6 +19,8 @@
   "trailing": false,
   "smarttabs": true,
   "globals": {
+    "conf": false,
+    "log": false,
     "requirejs": false,
     "angular": false,
     "describe": false,

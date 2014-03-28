@@ -18,8 +18,10 @@ module.exports = function $module(lessMiddleware, os, path) {
       }
     }, {
       paths: [
-        path.join(conf.get('bootstrapPath'), 'less'),
-        path.join(conf.get('ngGridPath'), 'src', 'less')
+        path.join(conf.get('bootstrapPath'), 'dist', 'css'),
+        // path.join(conf.get('bootstrapPath'), 'less'),
+        // path.join(conf.get('ngGridPath'), 'src', 'less')
+        conf.get('ngGridPath')
       ],
       dumpLineNumbers: true
     }, {

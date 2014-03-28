@@ -1,47 +1,43 @@
 'use strict';
 
-module.exports = function(Busboy, csv, InventoryService) {
+module.exports = function $module(Busboy, csv, CustomerService) {
+  if ($module.exports) {
+    return $module.exports;
+  }
   Busboy = Busboy || require('busboy');
   csv = csv || require('fast-csv');
-  InventoryService = InventoryService || require('../services/inventory');
+  CustomerService = CustomerService || require('../services/customer');
 
 
-  function InventoryController() {}
+  function CustomerController() {}
 
-  InventoryController.upload = function (req, res) {
+  CustomerController.upload = function (req, res) {
     res.setHeader('Content-Type', 'text/html');
 
     var fileUploadMessage = '';
 
     var busboy = new Busboy({ headers: req.headers });
     var fn = null;
-    var inventoryData = [];
+    var customerData = [];
 
     busboy.on('file', function(fieldname, file, filename) { //, encoding, mimetype) {
-      log.info('FileFieldName=%s, FileName=%s', fieldname, filename);
       fn = filename;
       csv
         .fromStream(file, {headers : true})
         .on('record', function(data){
+          if (data.SIZE) {
+            data.SIZE = data.SIZE.split('&quot;').join('');
+          }
           log.info('data=', data);
-          InventoryService.tell(JSON.stringify(data));
-          inventoryData.push(data);
+
+          CustomerService.tell(JSON.stringify(data));
+          customerData.push(data);
           // InventoryService.tell(JSON.stringify(data), 'utf8');
           // pub.write(JSON.stringify(data), 'utf8');
         })
         .on('end', function(){
           log.info('done!');
         });
-      file.on('data', function(data) {
-        log.info('FileFieldName=%s, FileFieldDataLength=%d', fieldname, data.length);
-      });
-      file.on('end', function() {
-        log.info('FileFieldName=%s, Event=Finished', fieldname);
-      });
-    });
-
-    busboy.on('field', function(fieldname, val) { //, valTruncated, keyTruncated) {
-      log.info('FieldName=%s', val);
     });
 
     busboy.on('finish', function() {
@@ -50,18 +46,15 @@ module.exports = function(Busboy, csv, InventoryService) {
       var responseObj = {
         fileUploadMessage: fileUploadMessage,
         response: fileUploadMessage,
-        inventoryData: inventoryData
+        customerData: customerData
       };
       console.log('Done parsing form!');
       res.send(JSON.stringify(responseObj));
-      // res.writeHead(303, { Connection: 'close', Location: '/' });
-      // res.end();
     });
 
     req.pipe(busboy);
   };
 
-  return InventoryController;
+  $module.exports = CustomerController;
+  return CustomerController;
 };
-
-module.exports.$inject = ['busboy', 'fast-csv'];

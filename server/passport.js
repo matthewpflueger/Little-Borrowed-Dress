@@ -1,13 +1,12 @@
 'use strict';
 
-module.exports = function(passport, LocalStrategy) {
+module.exports = function(User, passport, LocalStrategy) {
+
+  //FIXME - I hate referencing the model not via a service layer of some sort
+  User = User || require('./services/models/users')();
+
   passport = passport || require('passport');
   LocalStrategy = LocalStrategy || require('passport-local').Strategy;
-
-  var guest = {
-    email: 'guest@littleborroweddress.com',
-    name: 'Guest'
-  };
 
   // Serialize the user email to push into the session
   passport.serializeUser(function(user, done) {
@@ -15,12 +14,8 @@ module.exports = function(passport, LocalStrategy) {
   });
 
   // Deserialize the user object based on a pre-serialized token which is the user email
-  passport.deserializeUser(function(id, done) {
-    if (id === guest.email) {
-      done(null, guest);
-    } else {
-      throw new Error('Authentication and authorization not implemented');
-    }
+  passport.deserializeUser(function(email, done) {
+    User.findByEmail(email, done);
   });
 
   passport.use(new LocalStrategy({
@@ -28,21 +23,13 @@ module.exports = function(passport, LocalStrategy) {
       passwordField: 'password'
     },
     function(email, password, done) {
-      if (conf.get('restrictLoginDomain') && !/.*littleborroweddress\.com$/.test(email)) {
-        return done(null, false, { message: 'Unknown user'});
-      }
-
-      log.info('Authorizing email=%s', email);
-      log.info('guestAllowed=%s', conf.get('guestAllowed'));
-      if (conf.get('guestAllowed') && conf.get('guestEmail') === email) {
-        if (conf.get('guestPassword') === password) {
-          return done(null, guest);
+      User.validate(email, password, function(err, user) {
+        if (err) {
+          return done(null, false, { message: 'Invalid login' });
         } else {
-          return done(null, false, { message: 'Invalid password' });
+          return done(null, user);
         }
-      } else {
-        throw new Error('Authentication and authorization not implemented');
-      }
+      });
     }));
 
 };

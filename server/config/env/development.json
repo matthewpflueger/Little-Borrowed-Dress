@@ -3,7 +3,5 @@
   "db": "mongodb://localhost/lbd-dev",
   "logentries": {
     "enable": false
-  },
-
-  "guestAllowed": true
+  }
 }

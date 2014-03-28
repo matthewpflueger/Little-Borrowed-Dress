@@ -1,32 +1,79 @@
 'use strict';
 
-module.exports = function(mongoose, crypto) {
+module.exports = function $module(mongoose, crypto) {
+  if ($module.exports) {
+    return $module.exports;
+  }
+
   mongoose = mongoose || require('mongoose');
   crypto = crypto || require('crypto');
 
   var UserSchema = new mongoose.Schema({
+    createdOn: {
+      type: Date,
+      default: Date.now,
+      required: true
+    },
     name: {
       type: String,
       required: true,
-      match: /\S{5,}/
+      match: /^\S{2,}/
     },
     email: {
       type: String,
       required: true,
       unique: true,
-      match: /\S+@\S\.\S{2, 4}$/
+      match: /^\S+@\S+\.\S{2,4}$/
     },
     hashedPassword: {
       type: String,
       required: true,
-      match: /\S+/
+      match: /^\S{5,}$/
     },
     salt: {
       type: String,
       required: true,
-      match: /\S+/
+      match: /^\S{5,}$/
+    }
+  }, {
+    collection: 'users',
+    toObject: {
+      transform: function(doc, ret) {
+        delete ret.salt;
+        delete ret.hashedPassword;
+        delete ret._password;
+      }
     }
   });
+
+
+  UserSchema.statics.validate = function(email, password, cb) {
+    User.findOne({ email: email }, function(err, user) {
+      if (err) {
+        return cb(err);
+      }
+      if (!user) {
+        return cb(new Error('Unknown user'));
+      }
+      if (!user.authenticate(password)) {
+        return cb(new Error('Invalid password'));
+      }
+      return cb(null, user.toObject());
+    });
+  };
+
+  UserSchema.statics.findByEmail = function(email, cb) {
+    User.findOne({ email: email }, '-salt -hashed_password', function(err, user) {
+      if (err) {
+        return cb(err);
+      }
+      if (!user) {
+        return cb(new Error('Unknown user'));
+      } else {
+        return cb(null, user.toObject());
+      }
+    });
+  };
 
   UserSchema.virtual('password').set(function(password) {
     this._password = password;
@@ -74,7 +121,9 @@ module.exports = function(mongoose, crypto) {
     }
   };
 
-  return mongoose.model('User', UserSchema);
+  var User = mongoose.model('User', UserSchema);
+  $module.exports = User;
+  return User;
 };
 
 

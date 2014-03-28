@@ -1,6 +1,7 @@
 'use strict';
 
 global.jQuery = require('jquery');
+require('jqueryui/ui/jquery-ui');
 require('bootstrap/dist/js/bootstrap');
 require('angular/angular');
 require('angular-route/angular-route');
@@ -23,7 +24,8 @@ angular.module('lbd', [
   .factory('Global', require('./services/global')())
   .controller('IndexController', require('./controllers/index')())
   .controller('HeaderController', require('./controllers/header')())
-  .controller('MyController', require('./controllers/my')());
+  .controller('InventoryController', require('./controllers/inventory')())
+  .controller('OrderController', require('./controllers/order')());
 
 angular.element(document).ready(function() {
   angular.bootstrap(document, ['lbd']);

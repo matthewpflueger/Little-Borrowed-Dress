@@ -13,9 +13,13 @@ module.exports = function() {
         url: '/',
         templateUrl: 'views/index.html'
       })
-      .state('inventory upload', {
-        url: '/inventory/upload',
+      .state('inventory', {
+        url: '/inventory',
         templateUrl: 'views/inventory.html'
+      })
+      .state('orders', {
+        url: '/orders',
+        templateUrl: 'views/orders.html'
       });
 
     $locationProvider.hashPrefix('!');

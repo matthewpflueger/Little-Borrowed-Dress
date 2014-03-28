@@ -1,6 +1,10 @@
 'use strict';
 
 module.exports = function $module(mongoose, uuid) {
+  if ($module.exports) {
+    return $module.exports;
+  }
+
   mongoose = mongoose || require('mongoose');
   uuid = uuid || require('node-uuid');
 
@@ -60,6 +64,8 @@ module.exports = function $module(mongoose, uuid) {
       trim: true
     },
     events: []
+  }, {
+    collection: 'inventory'
   });
 
   InventorySchema.index({ style: 1, color: 1, size: 1});
@@ -70,7 +76,7 @@ module.exports = function $module(mongoose, uuid) {
     iv.productNumber = rec['Prod #'];
     iv.status = rec.Status;
     iv.tagId = rec['Tag ID'];
-    if (/.*n\/a.*/i.test(iv.tagId)) {
+    if (/.*n\/a.*/i.test(iv.tagId) || /^\s*$/.test(iv.tagId)) {
       iv.tagId = uuid.v4();
     }
     iv.style = rec.Style;
@@ -81,6 +87,7 @@ module.exports = function $module(mongoose, uuid) {
   };
 
   var Inventory = mongoose.model('Inventory', InventorySchema);
+  $module.exports = Inventory;
   return Inventory;
 };
 

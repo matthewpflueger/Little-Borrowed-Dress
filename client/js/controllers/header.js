@@ -7,10 +7,13 @@ module.exports = function() {
 
     $scope.menu = [{
       'title': 'Inventory',
-      'link': 'inventory/upload'
+      'link': 'inventory'
+    }, {
+      'title': 'Orders',
+      'link': 'orders'
     }];
 
-    $scope.isCollapsed = true;
+    $scope.isCollapsed = false;
   }
 
   HeaderController.$inject = ['$scope', 'Global'];

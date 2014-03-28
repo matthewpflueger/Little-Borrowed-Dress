@@ -1,6 +1,7 @@
 
-@import 'bootstrap';
-@import 'theme';
+@import (inline) 'bootstrap.css';
+@import (inline) 'bootstrap-theme.css';
+@import (inline) 'ng-grid.css';
 
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 
@@ -32,10 +33,10 @@ footer p {
 
 /* =================================== ngGrid ========================= */
 
-@import 'global'; //ng-grid/src/less/global.less :(
+// @import 'global'; //ng-grid/src/less/global.less :(
 
 .gridStyle {
     border: 1px solid rgb(212,212,212);
-    width: 400px;
-    height: 300px
+    width: 800px;
+    height: 500px;
 }

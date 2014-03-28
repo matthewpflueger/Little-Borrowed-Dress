@@ -34,10 +34,6 @@ module.exports = function $module(os, path, nconf) {
 
       'db': 'mongodb://localhost/lbd',
       'port': 8000,
-      'restrictLoginDomain': true,
-      'guestAllowed': false,
-      'guestEmail': 'guest@littleborroweddress.com',
-      'guestPassword': 'guest',
       'jsMain': '/js/app.js',
       'prettifyHtml': true,
       'cache': 'memory',

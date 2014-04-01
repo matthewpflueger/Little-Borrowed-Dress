@@ -6,8 +6,9 @@ module.exports = function $module() {
   }
 
   require('./models')();
+  require('./customer')();
 
-  require('./inventory');
+  // require('./inventory');
 
   $module.exports = {};
   return {};

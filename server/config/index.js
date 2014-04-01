@@ -33,6 +33,8 @@ module.exports = function $module(os, path, nconf) {
       },
 
       'db': 'mongodb://localhost/lbd',
+      'amqp': 'amqp://localhost',
+      'exchange': 'lbd',
       'port': 8000,
       'jsMain': '/js/app.js',
       'prettifyHtml': true,

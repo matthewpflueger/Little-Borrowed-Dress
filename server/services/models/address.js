@@ -28,9 +28,9 @@ module.exports = function $module(mongoose, utils) {
       type: Number,
       required: true
     }
-  }, {
-    _id : false
   });
+
+  AddressSchema.index({ zipcode: 1 });
 
   AddressSchema.methods.import = function(rec) {
     this.street = rec['SHIP TO ADDRESS'];

@@ -1,14 +1,19 @@
 'use strict';
 
-module.exports = function(Busboy, csv, InventoryService) {
+module.exports = function $module(Busboy, csv, when, router, cmds) {
+  if ($module.exports) {
+    return $module.exports;
+  }
+  $module.exports = {};
+
   Busboy = Busboy || require('busboy');
   csv = csv || require('fast-csv');
-  InventoryService = InventoryService || require('../services/inventory');
+  when = when || require('when');
+  router = router || require('../commands/router')();
+  cmds = cmds || require('../commands/inventory')();
 
 
-  function InventoryController() {}
-
-  InventoryController.upload = function (req, res) {
+  $module.exports.upload = function (req, res) {
     res.setHeader('Content-Type', 'text/html');
 
     var fileUploadMessage = '';
@@ -16,52 +21,44 @@ module.exports = function(Busboy, csv, InventoryService) {
     var busboy = new Busboy({ headers: req.headers });
     var fn = null;
     var inventoryData = [];
+    var promises = [];
+
 
     busboy.on('file', function(fieldname, file, filename) { //, encoding, mimetype) {
-      log.info('FileFieldName=%s, FileName=%s', fieldname, filename);
       fn = filename;
       csv
         .fromStream(file, {headers : true})
         .on('record', function(data){
-          log.info('data=', data);
-          InventoryService.tell(JSON.stringify(data));
-          inventoryData.push(data);
-          // InventoryService.tell(JSON.stringify(data), 'utf8');
-          // pub.write(JSON.stringify(data), 'utf8');
+          promises.push(router.ask(new cmds.ImportInventory(data)));
         })
-        .on('end', function(){
-          log.info('done!');
+        .on('end', function() {
+          fileUploadMessage = fn + ' uploaded to the server at ' + new Date().toString();
+          log.info(fileUploadMessage);
+
+          when.settle(promises).then(function (results) {
+            results.forEach(function(r) {
+              if (r.state === 'rejected') {
+                log.info('Add inventory rejected %s', r.reason);
+              } else {
+                log.info('Add inventory worked!!!');
+                inventoryData.push(r.value.content.inventory);
+              }
+            });
+
+            var responseObj = {
+              fileUploadMessage: fileUploadMessage,
+              response: fileUploadMessage,
+              inventoryData: inventoryData
+            };
+
+            console.log('Done parsing form!');
+            res.send(JSON.stringify(responseObj));
+          });
         });
-      file.on('data', function(data) {
-        log.info('FileFieldName=%s, FileFieldDataLength=%d', fieldname, data.length);
-      });
-      file.on('end', function() {
-        log.info('FileFieldName=%s, Event=Finished', fieldname);
-      });
-    });
-
-    busboy.on('field', function(fieldname, val) { //, valTruncated, keyTruncated) {
-      log.info('FieldName=%s', val);
-    });
-
-    busboy.on('finish', function() {
-      fileUploadMessage = fn + ' uploaded to the server at ' + new Date().toString();
-
-      var responseObj = {
-        fileUploadMessage: fileUploadMessage,
-        response: fileUploadMessage,
-        inventoryData: inventoryData
-      };
-      console.log('Done parsing form!');
-      res.send(JSON.stringify(responseObj));
-      // res.writeHead(303, { Connection: 'close', Location: '/' });
-      // res.end();
     });
 
     req.pipe(busboy);
   };
 
-  return InventoryController;
+  return $module.exports;
 };
-
-module.exports.$inject = ['busboy', 'fast-csv'];

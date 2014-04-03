@@ -12,15 +12,20 @@ module.exports = function $module() {
   }
   ImportOrderItem.routingKey = 'commands.orderitem.import';
 
-  function ImportOrderItemResponse(status, message, customer) {
+  function OrderItemImported(status, message, customer, order, orderitem, options) {
+    options = options || {};
+    this.routingKey = options.routingKey || OrderItemImported.routingKey;
     this.status = status;
     this.message = message;
     this.customer = customer.toJSON();
+    this.order = order.toJSON();
+    this.orderitem = orderitem.toJSON();
   }
+  OrderItemImported.routingKey = 'events.orderitem.import';
 
   $module.exports = {
     ImportOrderItem: ImportOrderItem,
-    ImportOrderItemResponse: ImportOrderItemResponse
+    OrderItemImported: OrderItemImported
   };
 
   return $module.exports;

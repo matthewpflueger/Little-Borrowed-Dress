@@ -1,23 +1,61 @@
-<div class="" data-ng-controller="HeaderController">
-  <ul class="navbar-nav nav">
-    <li>
+<nav class="" role="navigation" data-ng-controller="HeaderController">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
       <a class="navbar-brand" href="/">Little Borrowed Dress</a>
-    </li>
-    <li data-ng-repeat="item in menu" data-ng-show="global.user" ui-route="/{{item.link}}" ng-class="{active: $uiRoute}">
-      <a href="#!/{{item.link}}">{{item.title}}</a>
-    </li>
-  </ul>
-  <ul class="navbar-nav nav pull-right" data-ng-hide="global.authenticated">
-    <li><a href="/users/signin">Signin</a></li>
-  </ul>
-  <ul class="navbar-nav nav pull-right" data-ng-show="global.authenticated">
-    <li class="dropdown">
-      <a href="#!" class="dropdown-toggle" data-toggle="dropdown">
-        {{global.user.name}} <b class="caret"></b>
-      </a>
-      <ul class="dropdown-menu">
-        <li><a href="/users/signout">Signout</a></li>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" >
+      <ul class="nav navbar-nav" data-ng-show="global.authenticated">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Orders <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a ui-sref="orders.search">Search</a></li>
+            <li><a ui-sref="orders.upload">Upload</a></li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Inventory <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a ui-sref="inventory.search">Search</a></li>
+            <li><a ui-sref="inventory.upload">Upload</a></li>
+<!--
+            <li><a ui-sref="inbox">Another action</a></li>
+            <li><a href="#">Something else here</a></li>
+            <li class="divider"></li>
+            <li><a href="#">Separated link</a></li>
+            <li class="divider"></li>
+            <li><a href="#">One more separated link</a></li>
+ -->
+          </ul>
+        </li>
       </ul>
-    </li>
-  </ul>
-</div>
+      <form class="navbar-form navbar-left" role="search" data-ng-show="global.authenticated">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Quick Search">
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+      <ul class="navbar-nav nav pull-right" data-ng-hide="global.authenticated">
+        <li><a href="/users/signin">Signin</a></li>
+      </ul>
+      <ul class="navbar-nav nav pull-right" data-ng-show="global.authenticated">
+        <li class="dropdown">
+          <a href="#!" class="dropdown-toggle" data-toggle="dropdown">
+            {{global.user.name}} <b class="caret"></b>
+          </a>
+          <ul class="dropdown-menu">
+            <li><a href="/users/signout">Signout</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>

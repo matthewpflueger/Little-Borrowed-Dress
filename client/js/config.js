@@ -4,10 +4,8 @@ module.exports = function() {
 
   function Config($stateProvider, $urlRouterProvider, $locationProvider) {
 
-    // For unmatched routes:
     $urlRouterProvider.otherwise('/');
 
-    // states for my app
     $stateProvider
       .state('home', {
         url: '/',
@@ -15,13 +13,31 @@ module.exports = function() {
       })
       .state('inventory', {
         url: '/inventory',
-        templateUrl: 'views/inventory.html'
+        template: '<div ui-view><div ui-view>',
+      })
+      .state('inventory.search', {
+        url: '/search',
+        templateUrl: 'views/inventory/search.html'
+      })
+      .state('inventory.upload', {
+        url: '/upload',
+        templateUrl: 'views/inventory/upload.html'
       })
       .state('orders', {
         url: '/orders',
-        templateUrl: 'views/orders.html'
+        template: '<div ui-view><div ui-view>',
+        // templateUrl: 'views/orders.html'
+      })
+      .state('orders.search', {
+        url: '/search',
+        templateUrl: 'views/orders/search.html'
+      })
+      .state('orders.upload', {
+        url: '/upload',
+        templateUrl: 'views/orders/upload.html'
       });
 
+    $locationProvider.html5Mode(false);
     $locationProvider.hashPrefix('!');
   }
 

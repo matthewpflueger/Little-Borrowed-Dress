@@ -12,14 +12,20 @@ module.exports = function $module(amqp, when, uuid, config) {
 
 
   var correlations = {};
-  var replyTo = null;
+
+  var replyToDeferred = when.defer();
+  var replyTo = replyToDeferred.promise;
+
   var channelDeferred = when.defer();
   var channel = channelDeferred.promise;
 
+
   amqp.connect(config.get('amqp')).then(function(conn) {
     process.once('SIGINT', function() { conn.close(); });
+    conn.on('error', function(err) { log.error('Connection error=%s', err, {}); });
 
     conn.createChannel().then(function(ch) {
+      ch.on('error', function(err) { log.error('Channel error=%s', err, {}); });
       channelDeferred.resolve(ch);
       ch.prefetch(1);
 
@@ -33,17 +39,16 @@ module.exports = function $module(amqp, when, uuid, config) {
         log.info('About to assert replyTo queue');
         return ch.assertQueue('', { exclusive: true }).then(function(qok) {
           log.info('Asserted replyTo queue', qok);
-          replyTo = qok.queue;
-          return replyTo;
+          return qok.queue;
         });
       });
 
       log.info('About to consume from replyTo queue');
       ok = ok.then(function(queue) {
         log.info('Issuing consume from replyTo queue %s', queue);
-        return ch.consume(queue, answer, { noAck: true })
-          .then(function() {
+        return ch.consume(queue, answer, { noAck: true }).then(function() {
             log.info('Consuming from replyTo queue %s', queue);
+            replyToDeferred.resolve(queue);
             return queue;
           });
       });
@@ -99,6 +104,26 @@ module.exports = function $module(amqp, when, uuid, config) {
     });
   }
 
+  function tell(command) {
+    if (!command.routingKey) {
+      throw new Error('Command %j is missing routingKey', command, {});
+    }
+
+    log.info('Tell command=%s', command.routingKey);
+    return channel.then(function(ch) {
+      var published = ch.publish(
+        command.exchange || config.get('exchange'),
+        command.routingKey,
+        new Buffer(JSON.stringify(command)));
+
+      if (!published) {
+        return when.reject('Failed to tell command, channel full');
+      }
+
+      return when.resolve(published);
+    });
+  }
+
   function ask(command, timeoutIn) {
     if (!command.routingKey) {
       throw new Error('Command %j is missing routingKey', command, {});
@@ -108,7 +133,10 @@ module.exports = function $module(amqp, when, uuid, config) {
     var correlationId = uuid();
 
     log.info('Ask command=%s, timeoutIn=%s', command.routingKey, timeoutIn);
-    return channel.then(function(ch) {
+    return when.join(channel, replyTo).then(function(vals) {
+      var ch = vals[0];
+      var replyTo = vals[1];
+
       var published = ch.publish(
         command.exchange || config.get('exchange'),
         command.routingKey,
@@ -119,7 +147,7 @@ module.exports = function $module(amqp, when, uuid, config) {
         });
 
       if (!published) {
-        return when.reject('Failed to publish command, channel full');
+        return when.reject('Failed to ask command, channel full');
       }
 
       var d = when.defer();
@@ -145,10 +173,18 @@ module.exports = function $module(amqp, when, uuid, config) {
     });
   }
 
+  function ack(msg) {
+    channel.then(function(ch) {
+      ch.ack(msg);
+    });
+  }
+
   $module.exports = {
     ask: ask,
     receive: receive,
-    reply: reply
+    reply: reply,
+    tell: tell,
+    ack: ack
   };
   return $module.exports;
 };

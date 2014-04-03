@@ -1,30 +1,54 @@
 'use strict';
 
-var context = require('rabbit.js').createContext();
-var Rx = require('rx');
-var _ = require('lodash');
-var Inventory = require('mongoose').model('Inventory');
+module.exports = function $module(router, Inventory, cmds, utils) {
+  if ($module.exports) {
+    return $module.exports;
+  }
 
-context.on('ready', function() {
-  log.info('In context on ready');
-  var pub = context.socket('PUB');
-  pub.connect('events');
-  module.exports.tell = _.partialRight(pub.write.bind(pub), 'utf8');
+  router = router || require('../commands/router')();
+  Inventory = Inventory || require('./models/Inventory')();
+  cmds = cmds || require('../commands/inventory')();
+  utils = utils || require('../utils')();
 
-  var sub = context.socket('SUB');
-  sub.setEncoding('utf8');
-  sub.connect('events');
 
-  Rx.Node.fromStream(sub)
-    .map(function(x) { return JSON.parse(x); })
-    .subscribe(function(x) {
-      log.info('received data! %s', x['Tag ID']);
-      Inventory.import(x, function(err, m) {
-        if (err) {
-          log.error('Could not save Inventory %s', err);
-        } else {
-          log.info('Saved inventory with tagID=', m.tagId);
-        }
-      });
+  function importInventory(msg) {
+    var corrId = msg.properties.correlationId;
+    log.info('Importing inventory from message=%s', corrId);
+
+    var rec = msg.content.data;
+    var tagId = Inventory.makeTagId(rec['Tag ID']);
+    rec['Tag ID'] = tagId;
+
+    Inventory.findOne({ tagId: tagId }, function(err, inventory) {
+      if (err) {
+        log.error('Error finding inventory=%s, error=%s, message=%s', tagId, err, corrId);
+        router.reply(msg, utils.errors.makeError(err));
+        return;
+      }
+
+      if (!inventory) {
+        inventory = new Inventory();
+        inventory.import(rec);
+        inventory.save(function(err, i) {
+          if (err) {
+            log.error('Error saving inventory=%s, error=%s, message=%s', inventory.tagId, err, corrId);
+            router.reply(msg, utils.errors.makeError(err));
+          } else {
+            log.info('Imported inventory=%s, message=%s', inventory.tagId, corrId);
+            var res = new cmds.InventoryImported(201, 'Inventory created', i);
+            router.reply(msg, res);
+            router.tell(res);
+          }
+        });
+      } else {
+        log.info('Already exists inventory=%s, message=%s', inventory.tagId, corrId);
+        router.reply(msg, new cmds.InventoryImported(304, 'Inventory already exists', inventory));
+      }
     });
-});
+  }
+
+  router.receive(cmds.ImportInventory.routingKey, importInventory);
+
+  $module.exports = {};
+  return {};
+};

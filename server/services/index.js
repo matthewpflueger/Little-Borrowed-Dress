@@ -6,9 +6,9 @@ module.exports = function $module() {
   }
 
   require('./models')();
+  require('./inventory')();
   require('./customer')();
-
-  // require('./inventory');
+  require('./matcher')();
 
   $module.exports = {};
   return {};

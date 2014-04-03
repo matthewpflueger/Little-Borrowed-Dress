@@ -5,23 +5,21 @@
       <input type="file" name="file" id="orderFile">
       <p class="help-block">Select the csv file that contains the orders.</p>
     </div>
-    <button type="submit" class="btn btn-default" ng-disabled="$isUploading">Submit</button>
+    <button type="submit" class="btn btn-default" ng-model="button" ng-disabled="isUploading">Submit</button>
   </form>
-  <hr>
   <div class="selectedItems">
     <div ng-repeat="sel in orderSelections">
-      <ul>
-        <li>Name: {{sel['SHIP TO NAME']}}</li>
-        <li>Street: {{sel['SHIP TO ADDRESS']}}</li>
-        <li>City: {{sel['CITY']}}</li>
-        <li>State: {{sel['STATE']}}</li>
-        <li>Zip: {{sel['ZIP']}}</li>
-        <li>Phone: {{sel['TELEPHONE']}}</li>
-        <li>Email: {{sel['EMAIL']}}</li>
-      </ul>
+      <hr>
+      <address>
+        <strong>{{sel.name}}</strong><br>
+        <a href="mailto:#">{{sel.email}}</a><br>
+        <abbr title="Phone">P:</abbr>{{sel.telephone}}<br>
+        {{sel.street}}<br>
+        {{sel.city}}, {{sel.state}} {{sel.zipcode}}
+      </address>
+      <hr>
     </div>
   </div>
-  <hr>
   <div class="gridStyle" ng-grid="gridOptions"></div>
   <hr>
   <div class="alert alert-info">

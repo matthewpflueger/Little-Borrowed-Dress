@@ -1,12 +1,13 @@
 'use strict';
 
-module.exports = function $module(mongoose, uuid) {
+module.exports = function $module(mongoose, uuid, ItemDescription) {
   if ($module.exports) {
     return $module.exports;
   }
 
   mongoose = mongoose || require('mongoose');
   uuid = uuid || require('node-uuid');
+  ItemDescription = ItemDescription || require('./ItemDescription')();
 
   var InventorySchema = new mongoose.Schema({
     createdOn: {
@@ -37,53 +38,46 @@ module.exports = function $module(mongoose, uuid) {
       required: true,
       unique: true
     },
-    style: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      required: true
-    },
     notes: {
       type: String,
       default: '',
       trim: true
-    },
-    size: {
-      type: [String],
-      required: true
-    },
-    color: {
-      type: String,
-      trim: true,
-      lowercase: true,
-      required: true
     },
     location: {
       type: String,
       default: '',
       trim: true
     },
-    events: []
+    itemDescription: {
+      type: [ItemDescription.schema],
+      required: true
+    }
   }, {
     collection: 'inventory'
   });
 
   InventorySchema.index({ style: 1, color: 1, size: 1});
 
-  InventorySchema.statics.import = function(rec, cb) {
-    var iv = {};
-    iv.manufacturedOn = new Date(rec['Prod Date']);
-    iv.productNumber = rec['Prod #'];
-    iv.status = rec.Status;
-    iv.tagId = rec['Tag ID'];
-    if (/.*n\/a.*/i.test(iv.tagId) || /^\s*$/.test(iv.tagId)) {
-      iv.tagId = uuid.v4();
+
+  function makeTagId(tagId) {
+    if (!tagId || /.*n\/a.*/i.test(tagId) || /^\s*$/.test(tagId)) {
+      return uuid.v4();
     }
-    iv.style = rec.Style;
-    iv.size = rec.Size.split(/\s*|\s*/);
-    iv.notes = rec.Notes;
-    iv.color = rec.Color;
-    new Inventory(iv).save(cb);
+    return tagId;
+  }
+
+  InventorySchema.statics.makeTagId = makeTagId;
+
+  InventorySchema.methods.import = function(rec) {
+    this.manufacturedOn = new Date(rec['Prod Date']);
+    this.productNumber = rec['Prod #'];
+    this.status = rec.Status;
+    this.tagId = makeTagId(rec.tagId || rec['Tag ID']);
+    this.notes = rec.Notes;
+
+    var desc = this.itemDescription.create({});
+    desc.import(rec);
+    this.itemDescription.push(desc);
   };
 
   var Inventory = mongoose.model('Inventory', InventorySchema);

@@ -9,7 +9,7 @@ module.exports = function $module(mongoose, uuid, utils, Order) {
   mongoose = mongoose || require('mongoose');
   uuid = uuid || require('node-uuid');
   utils = utils || require('../../utils')();
-  Order = Order || require('./order')();
+  Order = Order || require('./Order')();
 
 
   var CustomerSchema = new mongoose.Schema({

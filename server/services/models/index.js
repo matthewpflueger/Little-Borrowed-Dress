@@ -14,13 +14,13 @@ module.exports = function $module(mongoose) {
   mongoose.connect(conf.get('db'));
 
   var models = {};
-  models.User = require('./users')();
-  models.Inventory = require('./inventory')();
-  models.Customer = require('./customers')();
-  models.Order = require('./order')();
-  models.OrderItem = require('./orderitem')();
-  models.Address = require('./address')();
-  models.Telephone = require('./telephone')();
+  models.User = require('./User')();
+  models.Inventory = require('./Inventory')();
+  models.Customer = require('./Customer')();
+  models.Order = require('./Order')();
+  models.OrderItem = require('./OrderItem')();
+  models.Address = require('./Address')();
+  models.ItemDescription = require('./ItemDescription')();
 
 
   models.save = function(model) {

@@ -3,7 +3,7 @@
 module.exports = function(User, passport, LocalStrategy) {
 
   //FIXME - I hate referencing the model not via a service layer of some sort
-  User = User || require('./services/models/users')();
+  User = User || require('./services/models/User')();
 
   passport = passport || require('passport');
   LocalStrategy = LocalStrategy || require('passport-local').Strategy;

@@ -1,14 +1,15 @@
 'use strict';
 
-module.exports = function $module(mongoose, utils, Address, OrderItem) {
+module.exports = function $module(mongoose, moment, utils, Address, OrderItem) {
   if ($module.exports) {
     return $module.exports;
   }
 
   mongoose = mongoose || require('mongoose');
+  moment = moment || require('moment');
   utils = utils || require('../../utils')();
-  Address = Address || require('./address')();
-  OrderItem = OrderItem || require('./orderitem')();
+  Address = Address || require('./Address')();
+  OrderItem = OrderItem || require('./OrderItem')();
 
   var OrderSchema = new mongoose.Schema({
     orderNumber: {
@@ -34,7 +35,20 @@ module.exports = function $module(mongoose, utils, Address, OrderItem) {
       required: true
     }
   }, {
-    _id : false
+    autoIndex: false,
+    toJSON: { getters: true, virtuals: true },
+  });
+
+  OrderSchema.index({ orderNumber: 1, bride: 1, weddingDate: -1});
+
+  OrderSchema.virtual('shipByDate').get(function() {
+    if (!this.weddingDate) {
+      return null;
+    }
+
+    var shipByDate = moment(this.weddingDate).subtract('weeks', 3).day('Friday').toDate();
+    log.info('shipByDate=%s', shipByDate);
+    return shipByDate;
   });
 
   OrderSchema.methods.import = function(rec) {
@@ -59,7 +73,7 @@ module.exports = function $module(mongoose, utils, Address, OrderItem) {
     orderitem.import(rec);
     var ois = this.orderitems.filter(function (oi) { return oi.hash === orderitem.hash; });
     if (ois.length) {
-      return null;
+      return ois[0];
     } else {
       this.orderitems.push(orderitem);
       return orderitem;

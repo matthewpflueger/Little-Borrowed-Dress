@@ -1,12 +1,13 @@
 'use strict';
 
-module.exports = function $module(mongoose, crypto) {
+module.exports = function $module(mongoose, crypto, helpers) {
   if ($module.exports) {
     return $module.exports;
   }
 
   mongoose = mongoose || require('mongoose');
   crypto = crypto || require('crypto');
+  helpers = helpers || require('./helpers')();
 
   var UserSchema = new mongoose.Schema({
     createdOn: {
@@ -35,16 +36,7 @@ module.exports = function $module(mongoose, crypto) {
       required: true,
       match: /^\S{5,}$/
     }
-  }, {
-    collection: 'users',
-    toObject: {
-      transform: function(doc, ret) {
-        delete ret.salt;
-        delete ret.hashedPassword;
-        delete ret._password;
-      }
-    }
-  });
+  }, helpers.schemaOptions({ collection: 'users' }));
 
 
   UserSchema.statics.validate = function(email, password, cb) {

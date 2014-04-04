@@ -1,13 +1,13 @@
 <div data-ng-controller="OrderController">
-  <form ng-upload="uploadComplete(content)" ng-upload-loading="startUploading()" action="/orders/upload" role="form">
+  <form data-ng-upload="uploadComplete(content)" data-ng-upload-loading="startUploading()" action="/orders/upload" data-role="form">
     <div class="form-group">
       <label for="orderFile">Order csv file</label>
       <input type="file" name="file" id="orderFile">
       <p class="help-block">Select the csv file that contains the orders.</p>
     </div>
-    <button type="submit" class="btn btn-default" ng-model="button" ng-disabled="isUploading">Submit</button>
+    <button type="submit" class="btn btn-default" data-ng-model="button" data-ng-disabled="isUploading">Submit</button>
   </form>
-  <div class="selectedItems">
+<!--   <div class="selectedItems">
     <div ng-repeat="sel in orderSelections">
       <hr>
       <address>
@@ -20,7 +20,8 @@
       <hr>
     </div>
   </div>
-  <div class="gridStyle" ng-grid="gridOptions"></div>
+ -->
+ <div class="gridStyle" data-ng-grid="gridOptions"></div>
   <hr>
   <div class="alert alert-info">
       Server Response: {{response | json}}

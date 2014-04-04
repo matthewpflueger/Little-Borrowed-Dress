@@ -12,8 +12,8 @@ module.exports = function $module(ordersController, requiresLogin, express) {
   var router = express.Router();
 
   router.get('/', requiresLogin, ordersController.all);
-  router.put('/:orderId', requiresLogin, ordersController.update);
   router.post('/upload', requiresLogin, ordersController.upload);
+  router.put('/:orderId', requiresLogin, ordersController.update);
 
   router.param('orderId', ordersController.order);
 

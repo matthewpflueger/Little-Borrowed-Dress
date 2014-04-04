@@ -1,13 +1,16 @@
 'use strict';
 
-module.exports = function $module(mongoose, uuid, ItemDescription) {
+module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservation, helpers) {
   if ($module.exports) {
     return $module.exports;
   }
 
   mongoose = mongoose || require('mongoose');
   uuid = uuid || require('node-uuid');
+  _ = _ || require('lodash');
   ItemDescription = ItemDescription || require('./ItemDescription')();
+  Reservation = Reservation || require('./Reservation')();
+  helpers = helpers || require('./helpers')();
 
   var InventorySchema = new mongoose.Schema({
     createdOn: {
@@ -51,10 +54,9 @@ module.exports = function $module(mongoose, uuid, ItemDescription) {
     itemDescription: {
       type: [ItemDescription.schema],
       required: true
-    }
-  }, {
-    collection: 'inventory'
-  });
+    },
+    reservations: [Reservation.schema]
+  }, helpers.schemaOptions({ collection: 'inventory' }));
 
   InventorySchema.index({ style: 1, color: 1, size: 1});
 
@@ -67,6 +69,40 @@ module.exports = function $module(mongoose, uuid, ItemDescription) {
   }
 
   InventorySchema.statics.makeTagId = makeTagId;
+
+  InventorySchema.methods.isAssignedTo = function(searchBy) {
+
+    return false;
+  };
+
+  InventorySchema.methods.hasReservations = function() {
+    var r = this.reservations;
+    return r && r.length && r.length > 0;
+  };
+
+  InventorySchema.methods.availabilityStatusOn = function(date) {
+    //FIXME status needs to be something other than 'for order'
+    if (this.status !== 'for order') {
+      return this.status;
+    }
+    if (!this.hasReservations()) {
+      return 'available';
+    }
+
+    var conflicts = this.reservations.reduce(function(pv, cv) {
+      if (cv.conflictsWith(date)) {
+        pv.push(cv);
+      }
+      return pv;
+    }, []);
+
+    if (conflicts.length) {
+      log.info('Inventory conflicts=%j', conflicts, {});
+      return 'reserved for ' + conflicts[0].type;
+    }
+
+    return 'available';
+  };
 
   InventorySchema.methods.import = function(rec) {
     this.manufacturedOn = new Date(rec['Prod Date']);

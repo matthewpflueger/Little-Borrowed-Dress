@@ -29,7 +29,6 @@ module.exports = function(_, moment) {
       //FIXME this logic is duplicated from the Order model :(
       entity.order.shipByDate = moment(entity.order.weddingDate).subtract('weeks', 3).day('Friday').toDate();
       entity.orderitem.itemDescription[0].size = entity.size.match(/(\d+)/g);
-      $scope.changesToSave[entity.customer._id] = entity.customer;
       $log.info('Save entity=%O', $scope.changesToSave);
 
       $http
@@ -70,7 +69,7 @@ module.exports = function(_, moment) {
         });
     };
 
-    $scope.isUploading = true;
+    $scope.isUploading = false;
     $scope.startUploading = function() {
       console.log('uploading....');
       $scope.isUploading = true;
@@ -119,6 +118,91 @@ module.exports = function(_, moment) {
         {field:'order.shipTo[0].city', displayName: 'City', enableCellEdit: true, width: '100'},
         {field:'order.shipTo[0].state', displayName: 'State', enableCellEdit: true, width: '80'},
         {field:'order.shipTo[0].zipcode', displayName: 'Zip', enableCellEdit: true, width: '50'},
+      ]
+    };
+
+
+
+    $scope.inventoryData = [];
+    $scope.inventorySelections = [];
+    $scope.searchBy = [true, true, true];
+
+
+    function queryInventory() {
+      if (!$scope.orderSelections[0]) {
+        $log.info('No order selected to query inventory for');
+        return;
+      }
+      var orderitem = $scope.orderSelections[0].orderitem;
+
+      //FIXME turn this into a directive...
+      if (!$scope.searchBy[0] && !$scope.searchBy[1] && !$scope.searchBy[2]) {
+        $scope.searchBy = [true, true, true];
+      }
+      var config = { params: {
+        style: $scope.searchBy[0],
+        color: $scope.searchBy[1],
+        size: $scope.searchBy[2]
+      }};
+
+      $log.info('Querying inventory for orderitem=%O, config=%O', orderitem, config);
+      $http.get('/inventory/orderitem/' + orderitem.id, config)
+        .success(function(data, status, headers, config) {
+          $log.info(
+            'Found inventory=%O, status=%s, orderitem=%O, headers=%O, config=%O',
+            data, status, orderitem, headers, config);
+          $scope.inventoryData = data;
+        }).error(function(data, status, headers, config) {
+          $log.error(
+            'Failed to find inventory for orderitem=%O, status=%s, data=%O, headers=%O, config=%O',
+            orderitem, status, data, headers, config);
+          $scope.inventoryData = [];
+        });
+    }
+
+    $scope.$watchCollection('searchBy', queryInventory);
+    $scope.$watchCollection('orderSelections', queryInventory);
+
+    $scope.inventoryReservable = [false];
+
+    function checkReservability() {
+      var sel = $scope.inventorySelections[0];
+      $log.info('Selected inventory=%O', sel);
+      $scope.inventoryReservable[0] = sel.availabilityStatus === 'available';
+      $log.info('Inventory reservable=%s', $scope.inventoryReservable);
+    }
+
+    $scope.$watchCollection('inventorySelections', checkReservability);
+
+
+    $scope.smallGridOptions = {
+      data: 'inventoryData',
+      selectedItems: $scope.inventorySelections,
+      enableCellSelection: true,
+      multiSelect: false,
+      enableColumnResize: true,
+      enableColumnReordering: true,
+      columnDefs: [
+        {field:'availabilityStatus', displayName:'Availability'},
+        {field:'inventory.status', displayName:'Status'},
+        {field:'inventory.tagId', displayName:'Tag Id'},
+        {field:'inventory.itemDescription[0].style', displayName:'Style'},
+        {field:'inventory.itemDescription[0].size', displayName:'Size'},
+        {field:'inventory.itemDescription[0].color', displayName:'Color'},
+        // {field:'order.orderNumber', displayName:'Order', enableCellEdit: false, width: '90'},
+        // {field:'order.shipByDate', displayName:'Ship By Date', enableCellEdit: false, width: '110', cellFilter: 'date'},
+        // {field:'order.weddingDate', displayName:'Wedding Date', enableCellEdit: true, width: '110', cellFilter: 'date'},
+        // {field:'order.bride', displayName:'Bride', enableCellEdit: true, width: '150'},
+        // {field:'orderitem.itemDescription[0].style', displayName:'Style', enableCellEdit: true, width: '50'},
+        // {field:'size', displayName:'Size', enableCellEdit: true, width: '50'},
+        // {field:'orderitem.itemDescription[0].color', displayName:'Color', enableCellEdit: true, width: '50'},
+        // {field:'customer.name', displayName: 'Name', enableCellEdit: true, width: '150'},
+        // {field:'customer.email', displayName: 'Email', enableCellEdit: true, width: '150'},
+        // {field:'customer.telephone', displayName: 'Phone', enableCellEdit: true, width: '100'},
+        // {field:'order.shipTo[0].street', displayName: 'Street', enableCellEdit: true, width: '150'},
+        // {field:'order.shipTo[0].city', displayName: 'City', enableCellEdit: true, width: '100'},
+        // {field:'order.shipTo[0].state', displayName: 'State', enableCellEdit: true, width: '80'},
+        // {field:'order.shipTo[0].zipcode', displayName: 'Zip', enableCellEdit: true, width: '50'},
       ]
     };
   }

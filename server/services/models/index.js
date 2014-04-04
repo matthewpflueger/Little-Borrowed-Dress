@@ -14,13 +14,17 @@ module.exports = function $module(mongoose) {
   mongoose.connect(conf.get('db'));
 
   var models = {};
+  //sub-docs
+  models.ItemDescription = require('./ItemDescription')();
+  models.Address = require('./Address')();
+  models.Reservation = require('./Reservation')();
+  models.OrderItem = require('./OrderItem')();
+  models.Order = require('./Order')();
+
+  //collections
   models.User = require('./User')();
   models.Inventory = require('./Inventory')();
   models.Customer = require('./Customer')();
-  models.Order = require('./Order')();
-  models.OrderItem = require('./OrderItem')();
-  models.Address = require('./Address')();
-  models.ItemDescription = require('./ItemDescription')();
 
 
   models.save = function(model) {

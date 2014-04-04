@@ -13,22 +13,10 @@
         <input type="checkbox" data-ng-model="searchBy[1]"> Color
         <input type="checkbox" data-ng-model="searchBy[2]"> Size
       </div>
-      <div class="col-md-6"><h3>Actions on Order #{{orderSelections[0].order.orderNumber}}</h3>
-
-          <!-- data-ng-disabled="{{inventorySelections[0] === undefined}}"> -->
-      <button
-          class="btn btn-default"
-          data-ng-click="reserveInventory()"
-          data-ng-disabled="{{inventoryReservable[0] === false}}">
-        Reserve Inventory
-      </button>
-      <button class="btn btn-default" data-ng-click="manufactureOrderItem()">Manufacture Order Item</button>
-      <button
-          class="btn btn-default"
-          data-ng-click="shipOrderItem()"
-          data-ng-disabled="{{orderSelections[0].orderitem.inventory[0] === undefined}}">
-        Ship Order Item
-      </button>
+      <div class="col-md-6"><h3>Actions</h3>
+      <button class="btn btn-default" data-ng-click="assignInventory()">Assign Inventory</button>
+      <button class="btn btn-default" data-ng-click="receiveInventory()">Receive Inventory</button>
+      <button class="btn btn-default" data-ng-click="changeInventoryStatus()">Change Inventory Status</button>
       </div>
     </div>
   </div>

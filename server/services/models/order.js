@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(mongoose, moment, utils, Address, OrderItem) {
+module.exports = function $module(mongoose, moment, utils, Address, OrderItem, helpers) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -10,6 +10,7 @@ module.exports = function $module(mongoose, moment, utils, Address, OrderItem) {
   utils = utils || require('../../utils')();
   Address = Address || require('./Address')();
   OrderItem = OrderItem || require('./OrderItem')();
+  helpers = helpers || require('./helpers')();
 
   var OrderSchema = new mongoose.Schema({
     orderNumber: {
@@ -34,10 +35,7 @@ module.exports = function $module(mongoose, moment, utils, Address, OrderItem) {
       type: [OrderItem.schema],
       required: true
     }
-  }, {
-    autoIndex: false,
-    toJSON: { getters: true, virtuals: true },
-  });
+  }, helpers.schemaOptions());
 
   OrderSchema.index({ orderNumber: 1, bride: 1, weddingDate: -1});
 

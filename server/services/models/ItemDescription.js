@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(mongoose, uuid, crypto) {
+module.exports = function $module(mongoose, uuid, crypto, helpers) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -9,6 +9,7 @@ module.exports = function $module(mongoose, uuid, crypto) {
   mongoose = mongoose || require('mongoose');
   uuid = uuid || require('node-uuid');
   crypto = crypto || require('crypto');
+  helpers = helpers || require('./helpers')();
 
   var ItemDescriptionSchema = new mongoose.Schema({
     style: {
@@ -27,9 +28,7 @@ module.exports = function $module(mongoose, uuid, crypto) {
       lowercase: true,
       required: true
     }
-  }, {
-    _id : false
-  });
+  }, helpers.schemaOptions({ _id: false }));
 
   ItemDescriptionSchema.index({ style: 1, color: 1, size: 1});
 

@@ -1,12 +1,13 @@
 'use strict';
 
-module.exports = function $module(mongoose, utils) {
+module.exports = function $module(mongoose, utils, helpers) {
   if ($module.exports) {
     return $module.exports;
   }
 
   mongoose = mongoose || require('mongoose');
   utils = utils || require('../../utils')();
+  helpers = helpers || require('./helpers')();
 
   var AddressSchema = new mongoose.Schema({
     street: {
@@ -28,7 +29,7 @@ module.exports = function $module(mongoose, utils) {
       type: Number,
       required: true
     }
-  });
+  }, helpers.schemaOptions());
 
   AddressSchema.index({ zipcode: 1 });
 

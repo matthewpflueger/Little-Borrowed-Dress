@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(mongoose, crypto, ItemDescription) {
+module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -8,6 +8,7 @@ module.exports = function $module(mongoose, crypto, ItemDescription) {
   mongoose = mongoose || require('mongoose');
   crypto = crypto || require('crypto');
   ItemDescription = ItemDescription || require('./ItemDescription')();
+  helpers = helpers || require('./helpers')();
 
   var OrderItemSchema = new mongoose.Schema({
     backup: {
@@ -29,7 +30,7 @@ module.exports = function $module(mongoose, crypto, ItemDescription) {
       default: 'unfulfilled'
     },
     inventory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Inventory' }]
-  });
+  }, helpers.schemaOptions());
 
 
   OrderItemSchema.methods.import = function(rec) {

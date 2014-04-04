@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(mongoose, uuid, utils, Order) {
+module.exports = function $module(mongoose, uuid, utils, Order, helpers) {
 
   if ($module.exports) {
     return $module.exports;
@@ -10,6 +10,7 @@ module.exports = function $module(mongoose, uuid, utils, Order) {
   uuid = uuid || require('node-uuid');
   utils = utils || require('../../utils')();
   Order = Order || require('./Order')();
+  helpers = helpers || require('./helpers')();
 
 
   var CustomerSchema = new mongoose.Schema({
@@ -34,9 +35,7 @@ module.exports = function $module(mongoose, uuid, utils, Order) {
       type: [Order.schema],
       required: true
     }
-  }, {
-    collection: 'customers'
-  });
+  }, helpers.schemaOptions({ collection: 'customers' }));
 
   CustomerSchema.index({ name: 1, email: 1, telephone: 1});
 

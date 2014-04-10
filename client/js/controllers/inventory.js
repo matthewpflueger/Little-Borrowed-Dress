@@ -1,12 +1,10 @@
 'use strict';
 
 module.exports = function() {
-  console.log('Inside InventoryController file');
 
   function InventoryController($scope) {
     $scope.isUploading = false;
     $scope.startUploading = function() {
-      console.log('uploading....');
       $scope.isUploading = true;
     };
 

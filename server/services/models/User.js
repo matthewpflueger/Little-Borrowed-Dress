@@ -62,7 +62,12 @@ module.exports = function $module(mongoose, crypto, helpers) {
       if (!user) {
         return cb(new Error('Unknown user'));
       } else {
-        return cb(null, user.toObject());
+        user = user.toObject();
+        delete user._bsontype;
+        delete user.createdOn;
+        delete user._id;
+        delete user.__v;
+        return cb(null, user);
       }
     });
   };

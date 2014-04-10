@@ -16,20 +16,11 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
       default: false,
       required: true
     },
-    hash: {
-      type: String,
-      required: true
-    },
     itemDescription: {
       type: [ItemDescription.schema],
       required: true
     },
-    status: {
-      type: String,
-      required: true,
-      default: 'unfulfilled'
-    },
-    inventory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Inventory' }]
+    inventory: { type: mongoose.Schema.Types.ObjectId, ref: 'Inventory' }
   }, helpers.schemaOptions());
 
 
@@ -38,8 +29,7 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
     desc.import(rec);
     this.itemDescription.push(desc);
 
-    this.backup = /\S+/.test(rec['BACKUP?']);
-    this.hash = desc.makeHash([this.backup]);
+    this.backup = /\S+/.test(rec.backup || rec['BACKUP?']);
   };
 
   var OrderItem = mongoose.model('OrderItem', OrderItemSchema);

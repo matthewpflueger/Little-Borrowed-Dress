@@ -47,7 +47,7 @@ module.exports = function $module(Busboy, csv, when, router, cmds, Customer, uti
 
     Inventory.find(params).exec(function(err, results) {
       if (err) {
-        log.error('Inventory query failed %s', err);
+        log.error('Inventory query failed error=%j', err, req.user);
         res.send(500, utils.errors.makeError(err, 'Inventory query failed'));
         return;
       }
@@ -55,99 +55,31 @@ module.exports = function $module(Busboy, csv, when, router, cmds, Customer, uti
       if (!results) {
         log.info(
           'No inventory found for params=%j, orderitem=%s',
-          params, orderitem.id, {});
-        res.send(404, utils.errors.makeError('No inventory!'));
+          params, orderitem.id, req.user);
+        res.send(404, utils.errors.makeError('No matching inventory found'));
         return;
       }
 
-      log.info('RESULTS');
       var inventories = [];
       results.forEach(function(r) {
-        var availabilityStatus = null;
-        if (r.isAssignedTo(orderitem)) {
-          availabilityStatus = 'assigned';
-        } else {
-          availabilityStatus = r.availabilityStatusOn(order.weddingDate);
-        }
-
         inventories.push({
-          availabilityStatus: availabilityStatus,
+          availabilityStatus: r.availabilityStatus(order.forDate, orderitem),
           inventory: r
         });
-    //     // if (r.reservableOn(order.weddingDate)) {
-    //     //   //we found a dress!
-    //     //   var rsvp = r.reservations.create({});
-    //     //   rsvp.orderitem = orderitem.id;
-    //     //   rsvp.orderNumber = order.orderNumber;
-    //     //   rsvp.date = order.weddingDate;
-    //     //   rsvp.customerEmail = customer.email;
-    //     //   rsvp.customerName = customer.name;
-    //     //   rsvp.customerTelephone = customer.telephone;
-    //     //   r.reservations.push(rsvp);
-
-        // log.info('FOUND A DRESS ', JSON.stringify(r.toJSON()));
-    //     //   when.join(
-    //     //     router.ask(new cmds.ReserveInventory(r, orderitem, order, customer)),
-    //     //     router.ask(new cmds.FulfillOrderItem(orderitem, r))
-    //     //   ).then(function() {
-    //     //     log.info(
-    //     //       'Reserved inventory=%s, orderitem=%s, order=%s, customer=%s',
-    //     //       r.tagId, orderitem.id, order.orderNumber, customer.email);
-    //     //     router.ack(msg);
-    //     //   }).catch(function(e) {
-    //     //     log.error(
-    //     //       'Failed to reserve inventory=%s, orderitem=%s, order=%s, customer=%s, error=%s',
-    //     //       r.tagId, orderitem.id, order.orderNumber, customer.email, e);
-    //     //     router.tell(new cmds.ReleaseInventory(r, orderitem, order, customer));
-    //     //     router.tell(new cmds.UnfulfillOrderItem(orderitem, r));
-    //     //     router.noAck(msg);
-    //     //   });
-    //     //   return;
-    //     // }
-    //     log.info(JSON.stringify(r.toJSON()));
       });
-
       res.json(inventories);
     });
   };
 
-  $module.exports.orderitem = function(req, res, next, id) {
-    log.info('Loading orderitem=%s', id);
-    Customer.findOne({ 'orders.orderitems._id': id }).exec(function(err, customer) {
-      if (err) {
-        return next(err);
-      }
-      if (!customer) {
-        return next(new Error('Failed to load customer ' + id));
-      }
+  $module.exports.manufacture = function(req, res) {
+    //for customer
+    //for order
+    //for order item
+    //create an inventory
+    //mark it as to be manufactured
+    //mark it as reserved for order/orderitem
+    //
 
-      log.info('Found customer=%j', customer, {});
-      req.customer = customer;
-
-      //FIXME just horrible - need I say more...
-      var found = false;
-      _.forEach(customer.orders, function(o) {
-        _.forEach(o.orderitems, function(oi) {
-          log.info('Inspecting orderitem=%j', oi, {});
-          if (oi.id === id) {
-            log.info('Found orderitem=%s', id);
-            req.orderitem = oi;
-            req.order = o;
-            found = true;
-            return false;
-          }
-        });
-
-        if (found) {
-          return false;
-        }
-      });
-
-      if (!found) {
-        return next(new Error('Failed to load orderitem ' + id));
-      }
-      next();
-    });
   };
 
   $module.exports.upload = function (req, res) {
@@ -175,9 +107,9 @@ module.exports = function $module(Busboy, csv, when, router, cmds, Customer, uti
           when.settle(promises).then(function (results) {
             results.forEach(function(r) {
               if (r.state === 'rejected') {
-                log.info('Add inventory rejected %s', r.reason);
+                log.info('Add inventory rejected %s', r.reason, req.user);
               } else {
-                log.info('Add inventory worked!!!');
+                log.info('Add inventory worked %j', r.value, req.user);
                 inventoryData.push(r.value.content.inventory);
               }
             });
@@ -188,7 +120,6 @@ module.exports = function $module(Busboy, csv, when, router, cmds, Customer, uti
               inventoryData: inventoryData
             };
 
-            console.log('Done parsing form!');
             res.send(JSON.stringify(responseObj));
           });
         });

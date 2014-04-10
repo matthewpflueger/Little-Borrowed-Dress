@@ -12,6 +12,7 @@ module.exports = function $module(express) {
   router.use('/inventory', require('./inventory')());
   router.use('/orders', require('./orders')());
   router.use('/users', require('./users')());
+  router.use('/reservations', require('./reservations')());
 
   $module.exports = router;
   return router;

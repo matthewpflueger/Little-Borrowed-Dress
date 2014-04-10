@@ -10,36 +10,48 @@
  * @param  {[type]} logentries [description]
  * @return {[type]}            [description]
  */
-module.exports = function $module(winston, logentries) {
+module.exports = function $module(fs, winston, logentries) {
   if ($module.exports) {
     return $module.exports;
   }
 
-  // morgan = morgan || require('morgan');
+  fs = fs || require('fs');
   winston = winston || require('winston');
+
+  winston.remove(winston.transports.Console);
+  if (conf.get('console:enable')) {
+    winston.add(winston.transports.Console, {
+      colorize: conf.get('console:colorize'),
+      timestamp: conf.get('console:timestamp'),
+      level: conf.get('console:level')
+    });
+  }
+
+  if (conf.get('file:enable')) {
+    winston.add(winston.transports.File, {
+      filename: conf.get('file:filename'),
+      colorize: conf.get('file:colorize'),
+      timestamp: conf.get('file:timestamp'),
+      json: conf.get('file:json'),
+      level: conf.get('file:level'),
+      maxsize: conf.get('file:maxsize'),
+      maxFiles: conf.get('file:maxFiles')
+    });
+  }
+
   logentries = logentries || require('node-logentries');
 
   if (conf.get('logentries:enable')) {
-    console.log('LogEntriesEnabled=true');
+    winston.info('Enabling logentries');
     logentries.logger({
-      token:'805cc5af-8388-4634-8781-60adbdf696c7'
+      token:'805cc5af-8388-4634-8781-60adbdf696c7',
+      handleExceptions: true
     }).winston(winston);
+    winston.info('Application booting');
   }
 
   global.log = winston;
 
-  // function Log(logStream) {
-  //   logStream = logStream || {
-  //     write: function(message) {
-  //       log.info(message.slice(0, -1));
-  //     }
-  //   };
-
-  //   return morgan({ stream: logStream });
-  // }
-
-  // Log.$inject = ['logStream'];
-  // $module.exports = Log;
   $module.exports = winston;
   return winston;
 };

@@ -11,6 +11,11 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
   utils = utils || require('../../utils')();
   helpers = helpers || require('./helpers')();
 
+  var reservationSpanDefaults = {
+    'wedding': '3 weeks',
+    'fitting': '2 weeks'
+  };
+
   var ReservationSchema = new mongoose.Schema({
     type: {
       type: String,
@@ -23,67 +28,70 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
       default: Date.now()
     },
 
-    reservationSpan: String,
+    reservationSpan: {
+      type: String,
+      required: true,
+      default: '3 weeks'
+    },
+
+    notes: String,
 
     orderNumber: String,
-    customerEmail: String,
+    email: String,
+    name: String,
+    telephone: Number,
 
-    orderId: mongoose.Schema.Types.ObjectId,
-    orderitemId: mongoose.Schema.Types.ObjectId,
+    order: mongoose.Schema.Types.ObjectId,
+    orderitem: mongoose.Schema.Types.ObjectId,
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer'
     }
   }, helpers.schemaOptions());
 
-  ReservationSchema.virtual('reservationStart').get(function() {
-    if (this.type === 'wedding') {
-      return moment(this.date).subtract(3, 'weeks').toDate();
+  function makeSpan(span) {
+    try {
+      var a = span.split(/\s/);
+      a[0] = parseInt(a[0]);
+      return a;
+    } catch (e) {
+      log.error('Failed to parse reservation span=%s, error=%j', span, e, {});
+      return makeSpan(reservationSpanDefaults.wedding);
     }
-    if (this.type === 'fitting') {
-      return moment(this.date).subtract(2, 'weeks').toDate();
-    }
+  }
 
+  ReservationSchema.virtual('reservationStart').get(function() {
     var m = moment(this.date);
-    return m.subtract.apply(m, this.reservationSpan.split(/\s/)).toDate();
+    return m.subtract.apply(m, makeSpan(this.reservationSpan)).toDate();
   });
 
   ReservationSchema.virtual('reservationEnd').get(function() {
-    if (this.type === 'wedding') {
-      return moment(this.date).add(3, 'weeks').toDate();
-    }
-    if (this.type === 'fitting') {
-      return moment(this.date).add(2, 'weeks').toDate();
-    }
-
     var m = moment(this.date);
-    return m.add.apply(m, this.reservationSpan.split(/\s/)).toDate();
+    return m.add.apply(m, makeSpan(this.reservationSpan)).toDate();
   });
 
-  ReservationSchema.methods.isAssignedTo = function(ids) {
-    ids = ids || {};
+  ReservationSchema.methods.make = function(customer, order, orderitem) {
+    this.type = order.type;
+    this.date = order.forDate;
+    this.reservationSpan = reservationSpanDefaults[order.type];
+    this.orderNumber = order.orderNumber;
+    this.email = customer.email;
+    this.name = customer.name;
+    this.telephone = customer.telephone;
+    this.order = order._id;
+    this.orderitem = orderitem._id;
+    this.customer = customer._id;
+  };
 
-    //FIXME seriously?!?!?
-    if (ids.orderitemId && ids.orderitemId === this.orderitemId) {
-      return true;
-    }
-    if (ids.orderId && ids.orderId === this.orderId) {
-      return true;
-    }
-    if (ids.customer && ids.customer === this.customer) {
-      return true;
-    }
-    if (ids.customer && this.customer && this.customer._id && ids.customer === this.customer._id) {
-      return true;
-    }
-    if (ids.orderNumber && ids.orderNumber === this.orderNumber) {
-      return true;
-    }
-    if (ids.customerEmail && ids.customerEmail === this.customerEmail) {
-      return true;
+  ReservationSchema.methods.isAssignedTo = function(orderitem) {
+    if (!orderitem || !this.orderitem) {
+      return false;
     }
 
-    return false;
+    var oi = this.orderitem._id || this.orderitem;
+    orderitem = orderitem._id || orderitem;
+
+    return oi.toString() === orderitem.toString();
   };
 
   ReservationSchema.methods.conflictsWith = function(date) {

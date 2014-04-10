@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(Customer, utils, Busboy, csv, when, _, router, commands) {
+module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx, router, commands) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -10,6 +10,8 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, router,
   csv = csv || require('fast-csv');
   when = when || require('when');
   _ = _ || require('lodash');
+  hl = hl || require('highland');
+  rx = rx || require('rx');
   router = router || require('../commands/router')();
   commands = commands || require('../commands/orderitem')();
   Customer = Customer || require('../services/models/Customer')();
@@ -30,23 +32,34 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, router,
     });
   };
 
-  $module.exports.order = function(req, res, next, id) {
-    log.info('Loading customer=%s', id);
-    Customer.findOne({ _id: id }).exec(function(err, customer) {
+  $module.exports.order = function(req, res) {
+    var customer = req.customer;
+    var order = req.order;
+    log.info('Adding to order=%j, orderitem=%j, customer=%j', order, req.body, customer, req.user);
+
+    var orderitem = order.importOrderItem(req.body);
+    customer.save(function(err, customer) {
       if (err) {
-        return next(err);
+        log.error('Failed to save customer=%j, error=%j', customer, err, req.user);
+        return res.json(500, utils.errors.makeError(err, 'Failed to save'));
       }
-      if (!customer) {
-        return next(new Error('Failed to load customer ' + id));
-      }
-      req.customer = customer;
-      next();
+
+      var o = customer.findOrder(order);
+      var oi = o.findOrderItem(orderitem);
+
+      log.info('Added to order=%j, orderitem=%j, customer=%j', o, oi, customer, req.user);
+
+      res.json({
+        customer: customer.toJSON(),
+        order: o.toJSON(),
+        orderitem: oi.toJSON()
+      });
     });
   };
 
   $module.exports.update = function(req, res) {
     var customer = req.customer;
-    log.info('Updating customer=%s, body=%j', customer.email, req.body, {});
+    log.info('Updating customer=%s, body=%j', customer.email, req.body, req.user);
     //FIXME currently we ignore versioning because multiple updates to the same record will fail
     //because while we send back the updated customer object the client DOES NOT use it in its
     //model thereby never getting the new version number of the document :(
@@ -57,7 +70,7 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, router,
     log.info('About to save customer=%j', customer, {});
     customer.save(function(err, customer) {
       if (err) {
-        log.error('Failed to save customer=%j', customer, {});
+        log.error('Failed to save customer=%j, error=%j', customer, err, req.user);
         return res.json(500, utils.errors.makeError(err, 'Failed to save'));
       }
       res.json(customer.toJSON());

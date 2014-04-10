@@ -26,11 +26,11 @@ module.exports = function $module(router, Customer, Inventory, cmds, utils, when
       order.orderNumber,
       customer.email);
 
-    if (!order.weddingDate) {
+    if (!order.forDate) {
       log.info(
-        'Cannot match order=%s, weddingDate=%s, orderitem=%s, assignedInventory=%s',
+        'Cannot match order=%s, forDate=%s, orderitem=%s, assignedInventory=%s',
         order.orderNumber,
-        order.weddingDate,
+        order.forDate,
         orderitem.hash,
         orderitem.assignedInventory);
       router.ack(msg);
@@ -61,12 +61,12 @@ module.exports = function $module(router, Customer, Inventory, cmds, utils, when
 
       log.info('RESULTS');
       results.forEach(function(r) {
-        // if (r.reservableOn(order.weddingDate)) {
+        // if (r.reservableOn(order.forDate)) {
         //   //we found a dress!
         //   var rsvp = r.reservations.create({});
         //   rsvp.orderitem = orderitem.id;
         //   rsvp.orderNumber = order.orderNumber;
-        //   rsvp.date = order.weddingDate;
+        //   rsvp.date = order.forDate;
         //   rsvp.customerEmail = customer.email;
         //   rsvp.customerName = customer.name;
         //   rsvp.customerTelephone = customer.telephone;

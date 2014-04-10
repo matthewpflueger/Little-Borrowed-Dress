@@ -70,9 +70,52 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
 
   InventorySchema.statics.makeTagId = makeTagId;
 
-  InventorySchema.methods.isAssignedTo = function(searchBy) {
+  InventorySchema.methods.release = function(customer, order, orderitem) {
+    //FIXME cannot release inventory if:
+    //  - now is past reservationEnd
+    //  - inventory/orderitem is no longer editable
+    //    - inventory/orderitem has shipped
 
-    return false;
+    log.info(
+      'Releasing inventory=%j, order=%j, orderitem=%j, customer=%j',
+      this, order, orderitem, customer, {});
+
+    var conflicts = this.reservationConflicts(order.forDate, orderitem);
+
+    log.info('Found conflicts=%j, inventory=%j', conflicts, this, {});
+
+    if (!conflicts.length || conflicts[0].status !== 'assigned') {
+      log.error(
+        'Not assigned inventory=%j, customer=%j, order=%j, orderitem=%j',
+        this, customer, order, orderitem, {});
+      return false;
+    }
+
+    //FIXME this really should be a cancel - not a removal
+    //we really should have an event list and just do rollups as necessary...
+    this.reservations.id(conflicts[0].reservation._id).remove();
+    return true;
+  };
+
+  InventorySchema.methods.reserve = function(customer, order, orderitem) {
+    log.info(
+      'Looking for availability for order=%j, orderitem=%j, customer=%j, inventory=%j',
+      order, orderitem, customer, this, {});
+    if (this.availabilityStatus(order.forDate, orderitem) !== 'available') {
+      log.warn(
+        'Not available inventory=%j, customer=%j, order=%j, orderitem=%j',
+        this, customer, order, orderitem, {});
+      return false;
+    }
+
+    var rsvp = this.reservations.create({});
+    rsvp.make(customer, order, orderitem);
+    this.reservations.push(rsvp);
+    return true;
+  };
+
+  InventorySchema.methods.isAssignedTo = function(searchBy) {
+    return _.find(this.reservations, function(r) { return r.isAssignedTo(searchBy); }) !== undefined;
   };
 
   InventorySchema.methods.hasReservations = function() {
@@ -80,28 +123,46 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
     return r && r.length && r.length > 0;
   };
 
-  InventorySchema.methods.availabilityStatusOn = function(date) {
-    //FIXME status needs to be something other than 'for order'
-    if (this.status !== 'for order') {
-      return this.status;
-    }
+  InventorySchema.methods.availableOn = function(date) {
+    return this.availabilityStatusOn(date) === 'available';
+  };
+
+  InventorySchema.methods.reservationConflicts = function(date, orderitem) {
     if (!this.hasReservations()) {
-      return 'available';
+      return [];
     }
 
+    date = date || Date.now();
+
     var conflicts = this.reservations.reduce(function(pv, cv) {
-      if (cv.conflictsWith(date)) {
-        pv.push(cv);
+      if (cv.isAssignedTo(orderitem)) {
+        //make sure if this inventory is assigned to the given orderitem it comes first...
+        pv = [{ status: 'assigned', reservation: cv }].concat(pv);
+      } else if (cv.conflictsWith(date)) {
+        pv.push({ status: 'reserved for ' + cv.orderNumber || cv.type, reservation: cv });
       }
       return pv;
     }, []);
 
-    if (conflicts.length) {
-      log.info('Inventory conflicts=%j', conflicts, {});
-      return 'reserved for ' + conflicts[0].type;
+    log.info('Reservation conflicts=%j, inventory=%j, date=%s, orderitem=%j',
+      conflicts, this, date, orderitem, {});
+    return conflicts;
+  };
+
+  InventorySchema.methods.availabilityStatus = function(date, orderitem) {
+    //FIXME status needs to be something other than 'for order'
+    if (this.status !== 'for order') {
+      log.info(
+        'Not available for reservation inventory=%j, date=%s, orderitem=%j',
+        this, date, orderitem, {});
+      return this.status;
     }
 
-    return 'available';
+    return this.reservationConflicts(date, orderitem).concat([{ status: 'available' }])[0].status;
+  };
+
+  InventorySchema.methods.availabilityStatusOn = function(date) {
+    return this.availabilityStatus({ date: date });
   };
 
   InventorySchema.methods.import = function(rec) {

@@ -18,8 +18,14 @@ angular.module('lbd', [
     'ngUpload',
     'ngGrid'
   ])
-  .config(require('./config')())
+  // .provider('$exceptionHandler', require('./services/exceptionHandlerProvider')())
+  // .provider('$log', require('./services/logProvider')())
+  .config(require('./config/log')())
+  .config(require('./config/router')())
   .factory('Global', require('./services/global')())
+  // .factory('stacktrace', require('./services/stacktrace')())
+  // .factory('errorLog', require('./services/errorLog')())
+  .filter('join', require('./filters/join')())
   // .factory('Orders', require('./services/orders')())
   .controller('IndexController', require('./controllers/index')())
   .controller('HeaderController', require('./controllers/header')())

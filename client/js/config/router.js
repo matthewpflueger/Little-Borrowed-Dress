@@ -19,6 +19,10 @@ module.exports = function() {
         url: '/search',
         templateUrl: 'views/inventory/search.html'
       })
+      .state('inventory.manufacture', {
+        url: '/manufacture',
+        templateUrl: 'views/inventory/manufacture.html'
+      })
       .state('inventory.upload', {
         url: '/upload',
         templateUrl: 'views/inventory/upload.html'

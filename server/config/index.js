@@ -27,9 +27,28 @@ module.exports = function $module(os, path, nconf) {
     .file(path.join(__dirname, 'env', process.env.NODE_ENV + '.json'))
     .defaults({
       'appName': 'Little Borrowed Dress',
+
+      'console': {
+        'enable': false,
+        'colorize': true,
+        'timestamp': true,
+        'level': 'debug'
+      },
+      'file': {
+        'enable': true,
+        'filename': path.join(rootPath, 'logs', 'lbd.log'),
+        'colorize': false,
+        'timestamp': true,
+        'json': true,
+        'level': 'debug',
+        'maxsize': 5242880,
+        'maxFiles': 10
+      },
       'logentries': {
         'enable': true,
-        'token': '805cc5af-8388-4634-8781-60adbdf696c7'
+        'token': '805cc5af-8388-4634-8781-60adbdf696c7',
+        'level': 'debug',
+        'timestamp': false
       },
 
       'db': 'mongodb://localhost/lbd',

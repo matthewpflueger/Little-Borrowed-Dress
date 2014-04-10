@@ -2,6 +2,12 @@
   "appName": "Development - Little Borrowed Dress",
   "db": "mongodb://localhost/lbd-dev",
   "logentries": {
+    "enable": true
+  },
+  "file": {
     "enable": false
+  },
+  "console": {
+    "enable": true
   }
 }

@@ -5,12 +5,12 @@ module.exports = function $module() {
     return $module.exports;
   }
 
-  function makeError(err, message) {
-    return { error: {
-      statusCode: 500,
+  function makeError(err, message, status) {
+    return {
+      status: status || 500,
       message: message || err.message || err.toString(),
-      cause: err
-    }};
+      cause: err.toString()
+    };
   }
 
   $module.exports = {

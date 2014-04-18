@@ -67,7 +67,23 @@ module.exports = function $module(os, path, nconf) {
       'bootstrapPath': path.join(rootPath, 'node_modules', 'bootstrap'),
       'ngGridPath': path.join(rootPath, 'node_modules', 'ng-grid'),
       'cssDirPath': path.join(rootPath, 'client', 'css'),
-      'tmpCssDirPath': path.join(os.tmpDir(), 'css-cache')
+      'tmpCssDirPath': path.join(os.tmpDir(), 'css-cache'),
+
+      //FIXME - this is ugly but for now I don't want to create a lookup table...
+      'styles': {
+        'cheryl': 1401,
+        'leigh': 1411,
+        'hillary': 1402,
+        'jane': 1422,
+        'catherine': 1403,
+        'ann': 1433,
+        'kate': 1404,
+        'madison': 1444,
+        'emma': 1405,
+        'olivia': 1455,
+        'julie': 1301,
+        'julie-elizabeth': 1311
+      }
     });
 
   global.conf = nconf;

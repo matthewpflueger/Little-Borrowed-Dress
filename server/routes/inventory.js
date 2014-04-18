@@ -12,7 +12,9 @@ module.exports = function $module(inventoryController, requiresLogin, params, ex
 
   var router = express.Router();
   router.post('/upload', requiresLogin, inventoryController.upload);
-  router.get('/orderitem/:orderitem', requiresLogin, inventoryController.inventoryForOrderitem);
+  router.get('/orderitem/:orderitem', requiresLogin, inventoryController.inventoryForOrderItem);
+  router.post('/:orderitem', requiresLogin, inventoryController.manufactureOrderItem);
+  router.post('/ship/:orderitem', requiresLogin, inventoryController.shipInventory);
 
   router.param('orderitem', params.orderitem);
 

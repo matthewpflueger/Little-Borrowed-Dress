@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(Busboy, csv, when, router, cmds, Customer, utils, _, Inventory) {
+module.exports = function $module(Busboy, csv, when, query, router, cmds, Customer, utils, _, Inventory) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -9,6 +9,7 @@ module.exports = function $module(Busboy, csv, when, router, cmds, Customer, uti
   Busboy = Busboy || require('busboy');
   csv = csv || require('fast-csv');
   when = when || require('when');
+  query = query || require('../services/query')();
   router = router || require('../commands/router')();
   cmds = cmds || require('../commands/inventory')();
   Customer = Customer || require('../services/models/Customer')();
@@ -16,73 +17,38 @@ module.exports = function $module(Busboy, csv, when, router, cmds, Customer, uti
   _ = _ || require('lodash');
   Inventory = Inventory || require('../services/models/Inventory')();
 
-  $module.exports.inventoryForOrderitem = function(req, res) {
-    log.info('Querying inventory for orderitem=%j, style=%s, color=%s, size=%s',
-      req.orderitem, req.query.style, req.query.color, req.query.size, {});
-
-    // var customer = req.customer;
-    var order = req.order;
-    var orderitem = req.orderitem;
-    var params = {};
-
-    if (req.query.style === 'true') {
-      params['itemDescription.style'] = orderitem.itemDescription[0].style;
-    }
-    if (req.query.color === 'true') {
-      params['itemDescription.color'] = orderitem.itemDescription[0].color;
-    }
-    if (req.query.size === 'true') {
-      //don't do exact matches on size as this is often too restrictive...
-      params['itemDescription.size'] = orderitem.itemDescription[0].size[0];
-    }
-
-    if (!Object.keys(params)) {
-      //always filter by something...
-      params['itemDescription.style'] = orderitem.itemDescription[0].style;
-      params['itemDescription.color'] = orderitem.itemDescription[0].color;
-      params['itemDescription.size'] = orderitem.itemDescription[0].size;
-    }
-
-    log.info('Query inventory params=%j', params, {});
-
-    Inventory.find(params).exec(function(err, results) {
-      if (err) {
-        log.error('Inventory query failed error=%j', err, req.user);
-        res.send(500, utils.errors.makeError(err, 'Inventory query failed'));
-        return;
-      }
-
-      if (!results) {
-        log.info(
-          'No inventory found for params=%j, orderitem=%s',
-          params, orderitem.id, req.user);
-        res.send(404, utils.errors.makeError('No matching inventory found'));
-        return;
-      }
-
-      var inventories = [];
-      results.forEach(function(r) {
-        inventories.push({
-          availabilityStatus: r.availabilityStatus(order.forDate, orderitem),
-          inventory: r
-        });
-      });
-      res.json(inventories);
+  function shipInventory(req, res) {
+    router.ask(new cmds.ShipInventory(req.orderitem, req.user)).then(function(r) {
+      res.json(r.content.status, r.content);
+    }).catch(function(e) {
+      res.json(500, utils.errors.makeError(e, 'Inventory ship failed'));
     });
-  };
+  }
 
-  $module.exports.manufacture = function(req, res) {
-    //for customer
-    //for order
-    //for order item
-    //create an inventory
-    //mark it as to be manufactured
-    //mark it as reserved for order/orderitem
-    //
+  function inventoryForOrderItem(req, res) {
+    query.findInventoryForOrderItemForDate(
+        req.orderitem,
+        req.order.forDate,
+        req.query)
+    .then(function(results) {
+      res.json(results);
+    }).catch(query.NotFoundError, function(e) {
+      res.send(404, utils.errors.makeError(e));
+    }).catch(function(e) {
+      log.error(e.toString(), req.user);
+      res.send(500, utils.errors.makeError(e));
+    });
+  }
 
-  };
+  function manufactureOrderItem(req, res) {
+    router.ask(new cmds.RequestManufactureInventory(req.orderitem, req.user)).then(function(r) {
+      res.json(r.content.status, r.content);
+    }).catch(function(e) {
+      res.json(500, utils.errors.makeError(e, 'Inventory manufacture request failed'));
+    });
+  }
 
-  $module.exports.upload = function (req, res) {
+  function upload(req, res) {
     res.setHeader('Content-Type', 'text/html');
 
     var fileUploadMessage = '';
@@ -126,7 +92,13 @@ module.exports = function $module(Busboy, csv, when, router, cmds, Customer, uti
     });
 
     req.pipe(busboy);
-  };
+  }
 
+  $module.exports = {
+    shipInventory: shipInventory,
+    inventoryForOrderItem: inventoryForOrderItem,
+    manufactureOrderItem: manufactureOrderItem,
+    upload: upload
+  };
   return $module.exports;
 };

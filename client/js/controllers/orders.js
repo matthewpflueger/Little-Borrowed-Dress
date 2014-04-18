@@ -91,8 +91,10 @@ module.exports = function(_, moment) {
     };
 
     $scope.reserveInventory = function() {
-      var orderitem = $scope.orderSelections[0].orderitem.id;
-      var inventory = $scope.inventorySelections[0].inventory.id;
+      var orderSel = $scope.orderSelections[0];
+      var inventorySel = $scope.inventorySelections[0];
+      var orderitem = orderSel.orderitem.id;
+      var inventory = inventorySel.inventory.id;
 
       $http
         .post('/reservations/' + orderitem + '/' + inventory)
@@ -100,11 +102,12 @@ module.exports = function(_, moment) {
           $log.info(
             'Reserved inventory=%O, status=%s, headers=%O, config=%O',
             data, status, headers, config);
-          $scope.orderSelections[0].customer = data.customer;
-          $scope.orderSelections[0].order = data.order;
-          $scope.orderSelections[0].orderitem = data.orderitem;
-          $scope.inventorySelections[0].inventory = data.inventory;
-          $scope.inventorySelections[0].availabilityStatus = data.availabilityStatus;
+          orderSel.customer = data.customer;
+          orderSel.order = data.order;
+          orderSel.orderitem = data.orderitem;
+          inventorySel.inventory = data.inventory;
+          inventorySel.availabilityStatus = data.availabilityStatus;
+          queryInventory();
         }).error(function(data, status, headers, config) {
           $log.error(
             'Failed to reserve inventory=%O, status=%s, headers=%O, config=%O',
@@ -113,11 +116,13 @@ module.exports = function(_, moment) {
     };
 
     $scope.releaseInventory = function() {
-      if (!$scope.orderSelections[0]) {
+      var sel = $scope.orderSelections[0];
+      if (!sel) {
         $log.warn('No order selection to release inventory for');
         return;
       }
-      var orderitem = $scope.orderSelections[0].orderitem;
+
+      var orderitem = sel.orderitem;
       if (!orderitem.inventory) {
         $log.warn('No associated inventory for orderitem=%O', orderitem);
         return;
@@ -129,9 +134,9 @@ module.exports = function(_, moment) {
           $log.info(
             'Released inventory=%O, status=%s, headers=%O, config=%O',
             data, status, headers, config);
-          $scope.orderSelections[0].customer = data.customer;
-          $scope.orderSelections[0].order = data.order;
-          $scope.orderSelections[0].orderitem = data.orderitem;
+          sel.customer = data.customer;
+          sel.order = data.order;
+          sel.orderitem = data.orderitem;
           queryInventory();
         }).error(function(data, status, headers, config) {
           $log.error(
@@ -197,7 +202,27 @@ module.exports = function(_, moment) {
     $scope.inventoryData = [];
     $scope.inventorySelections = [];
     $scope.searchBy = [true, true, true];
+    $scope.orderItemInventory = {
+      inventory: null,
+      reservation: null
+    };
 
+
+    $scope.resGridOptions = {
+      data: 'reservationData',
+      enableCellSelection: false,
+      multiSelect: false,
+      enableColumnResize: true,
+      enableColumnReordering: false,
+      columnDefs: [
+        {field:'inventory.tagId', displayName:'Tag Id'},
+        {field:'inventory.itemDescription[0].style', displayName:'Style', width: '70'},
+        {field:'inventory.itemDescription[0].size', displayName:'Size', width: '70', cellFilter: 'join:" | "'},
+        {field:'inventory.itemDescription[0].color', displayName:'Color', width: '70'},
+        {field:'reservation.reservationStart', displayName:'Start', width: '100', cellFilter: 'date'},
+        {field:'reservation.reservationEnd', displayName:'End', width: '100', cellFilter: 'date'},
+      ]
+    };
 
     function queryInventory() {
       if (!$scope.orderSelections[0]) {
@@ -222,12 +247,24 @@ module.exports = function(_, moment) {
           $log.info(
             'Found inventory=%O, status=%s, orderitem=%O, headers=%O, config=%O',
             data, status, orderitem, headers, config);
-          $scope.inventoryData = data;
+          $scope.inventoryData = data.inventories;
+          if (!data.inventory) {
+            $scope.orderItemInventory.status = 'No inventory reserved for order item';
+            $scope.orderItemInventory.inventory = null;
+            $scope.orderItemInventory.reservation = null;
+          } else {
+            $scope.reservationData = [{
+              inventory: data.inventory,
+              reservation: data.reservation
+            }];
+            $scope.orderItemInventory.status = 'Reserved inventory for order item';
+            $scope.orderItemInventory.inventory = data.inventory;
+            $scope.orderItemInventory.reservation = data.reservation;
+          }
         }).error(function(data, status, headers, config) {
           $log.error(
             'Failed to find inventory for orderitem=%O, status=%s, data=%O, headers=%O, config=%O',
             orderitem, status, data, headers, config);
-          $scope.inventoryData = [];
         });
     }
 
@@ -236,13 +273,23 @@ module.exports = function(_, moment) {
 
 
     $scope.isInventoryReservable = function() {
-      var sel = $scope.inventorySelections[0];
-      return sel && sel.availabilityStatus === 'available' && !$scope.hasAssignedInventory();
+      var isReservable = false;
+      if ($scope.inventorySelections[0] &&
+          $scope.inventorySelections[0].availabilityStatus === 'available' &&
+          !$scope.hasAssignedInventory()) {
+        isReservable = true;
+      }
+      $log.info('Determining isInventoryReservable=%s, inventorySelections=%O', isReservable, $scope.inventorySelections[0]);
+      return isReservable;
     };
 
     $scope.hasAssignedInventory = function() {
-      var isAssigned = $scope.orderSelections[0] && $scope.orderSelections[0].orderitem.inventory !== undefined;
-      // $log.info('Determining hasAssignedInventory=%s, orderSelections=%O', isAssigned, $scope.orderSelections[0]);
+      var isAssigned = false;
+      if ($scope.orderSelections[0] &&
+          $scope.orderSelections[0].orderitem.inventory) {
+        isAssigned = true;
+      }
+      $log.info('Determining hasAssignedInventory=%s, orderSelections=%O', isAssigned, $scope.orderSelections[0]);
       return isAssigned;
     };
 
@@ -257,7 +304,6 @@ module.exports = function(_, moment) {
       sortInfo: { fields: ['availabilityStatus'], directions: ['asc']},
       columnDefs: [
         {field:'availabilityStatus', displayName:'Availability', width: '170'},
-        // {field:'inventory.status', displayName:'Status'},
         {field:'inventory.tagId', displayName:'Tag Id'},
         {field:'inventory.itemDescription[0].style', displayName:'Style', width: '70'},
         {field:'inventory.itemDescription[0].size', displayName:'Size', width: '70', cellFilter: 'join:" | "'},
@@ -289,6 +335,59 @@ module.exports = function(_, moment) {
           $log.error(
             'Failed to add orderitem=%O, status=%s, data=%O, headers=%O, config=%O',
             $scope.newOrderItem, status, data, headers, config);
+        });
+    };
+
+    $scope.isShippable = function() {
+      var sel = $scope.orderSelections[0];
+      return $scope.hasAssignedInventory() && !sel.orderitem.shippedOn;
+    };
+
+    $scope.shipOrderItem = function() {
+      var sel = $scope.orderSelections[0];
+      if (!sel) {
+        $log.error('No order items selected to ship');
+        return;
+      }
+
+      $http
+        .post('/inventory/ship/' + sel.orderitem.id)
+        .success(function(data, status) {
+          $log.info(
+            'Shipped orderitem=%O, data=%O, status=%s',
+            sel.orderitem, data, status);
+          sel.customer = data.customer;
+          sel.order = data.order;
+          sel.orderitem = data.orderitem;
+          queryInventory();
+        }).error(function(data, status) {
+          $log.error(
+            'Failed to ship orderitem=%O, status=%s, data=%O',
+            sel.orderitem, status, data);
+        });
+    };
+
+    $scope.manufactureOrderItem = function() {
+      var sel = $scope.orderSelections[0];
+      if (!sel) {
+        $log.error('No order items selected to manufacture');
+        return;
+      }
+
+      $http
+        .post('/inventory/' + sel.orderitem.id)
+        .success(function(data, status) {
+          $log.info(
+            'Manufactured orderitem=%O, data=%O, status=%s',
+            sel.orderitem, data, status);
+          sel.customer = data.customer;
+          sel.order = data.order;
+          sel.orderitem = data.orderitem;
+          queryInventory();
+        }).error(function(data, status) {
+          $log.error(
+            'Failed to manufacture orderitem=%O, status=%s, data=%O',
+            sel.orderitem, status, data);
         });
     };
   }

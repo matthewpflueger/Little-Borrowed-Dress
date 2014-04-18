@@ -1,119 +1,145 @@
 'use strict';
 
-module.exports = function $module(_, Customer, Inventory) {
+module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
   if ($module.exports) {
     return $module.exports;
   }
-  $module.exports = {};
 
+  util = util || require('util');
   _ = _ || require('lodash');
+  when = when || require('when');
+  nodefn = nodefn || require('when/node');
+
   Customer = Customer || require('./models/Customer')();
   Inventory = Inventory || require('./models/Inventory')();
 
-  $module.exports.findInventoryById = function(id, cb) {
-    log.info('Loading inventory=%s', id);
-    Inventory.findOne({ _id: id }).exec(function(err, results) {
-      if (err) {
-        return cb(err);
+
+  function check(promise, message) {
+    return promise.then(function(r) {
+      if (!r) {
+        throw new NotFoundError(message);
       }
-      if (!results) {
-        return cb(null, false);
-      }
-      cb(null, { inventory: results });
+      return r;
+    }).timeout(5000);
+  }
+
+
+  function NotFoundError(message) {
+    this.message = message;
+  }
+  util.inherits(NotFoundError, Error);
+
+  function findInventoryById(id) {
+    return check(
+        nodefn.lift(Inventory.findOne.bind(Inventory))({ _id: id }),
+        'Inventory not found with id ' + id);
+  }
+
+  function findCustomerById(id) {
+    return check(
+        nodefn.lift(Customer.findOne.bind(Customer))({ _id: id }),
+        'Customer not found with id ' + id);
+  }
+
+  function findOrderById(id) {
+    return check(
+          nodefn.lift(Customer.findOne.bind(Customer))({ 'orders._id': id }),
+          'Not found order with id ' + id).then(function(customer) {
+      return customer.findOrder(id);
     });
-  };
+  }
 
-  $module.exports.findCustomerById = function(id, cb) {
-    log.info('Loading customer=%s', id);
-    Customer.findOne({ _id: id }).exec(function(err, customer) {
-      if (err) {
-        return cb(err);
-      }
-      if (!customer) {
-        return cb(null, false);
-      }
-      cb(null, { customer: customer });
+  function findOrderItemById(id) {
+    return check(
+          nodefn.lift(Customer.findOne.bind(Customer))({ 'orders.orderitems._id': id }),
+          'Not found order item with id ' + id).then(function(customer) {
+      return customer.findOrderItem(id);
     });
-  };
+  }
 
-  $module.exports.findOrderById = function(id, cb) {
-    log.info('Loading order=%s', id);
-    Customer.findOne({ 'orders._id': id }).exec(function(err, customer) {
-      if (err) {
-        return cb(err);
-      }
+  function findReservationByOrderItem(orderitem) {
+    orderitem = orderitem._id || orderitem;
+    return check(
+          nodefn.lift(Inventory.findOne.bind(Inventory))({ 'reservations.orderitem': orderitem }),
+          'Not found reservation for order item ' + orderitem);
+  }
 
-      if (!customer) {
-        return cb(null, false);
-      }
+  function findInventoryForOrderItemForDate(orderitem, forDate, limitBy) {
+    limitBy = limitBy || { style: true, color: true, size: true};
+    log.info(
+      'Querying inventory for orderitem=%j, forDate=%s, style=%s, color=%s, size=%s',
+      orderitem, forDate, limitBy.style, limitBy.color, limitBy.size, {});
 
-      log.info('Found customer=%j, order=%s', customer, id, {});
-      var result = {};
-      result.customer = customer;
+    var params = {};
 
-      //FIXME just horrible - need I say more...
-      var found = false;
-      _.forEach(customer.orders, function(o) {
-        log.info('Inspecting order=%j', o, {});
-        if (o.id === id) {
-          log.info('Found order=%s', id);
-          result.order = o;
-          found = true;
-          return false;
-        }
+    if (limitBy.style === 'true' || limitBy.style === true) {
+      params['itemDescription.style'] = orderitem.itemDescription[0].style;
+    }
+    if (limitBy.color === 'true' || limitBy.color === true) {
+      params['itemDescription.color'] = orderitem.itemDescription[0].color;
+    }
+    if (limitBy.size === 'true' || limitBy.size === true) {
+      //don't do exact matches on size as this is often too restrictive...
+      params['itemDescription.size'] = orderitem.itemDescription[0].size[0];
+    }
 
-        if (found) {
-          return false;
-        }
+    if (!Object.keys(params)) {
+      //always filter by something...
+      params['itemDescription.style'] = orderitem.itemDescription[0].style;
+      params['itemDescription.color'] = orderitem.itemDescription[0].color;
+      params['itemDescription.size'] = orderitem.itemDescription[0].size;
+    }
+
+    log.info('Query inventory params=%j', params, {});
+
+
+    var assignedInventoryPromise = null;
+    if (orderitem.inventory) {
+      assignedInventoryPromise = findInventoryById(orderitem.inventory)
+          .then(function(i) {
+            return {
+              inventory: i,
+              reservation: i.reservationFor(orderitem)
+            };
+          })
+          .catch(function(e) {
+            log.error('Could not find assigned inventory for orderitem=%j, error=%s', orderitem, e, {});
+            return {};
+          });
+    } else {
+      assignedInventoryPromise = when({});
+    }
+
+    var inventoryQueryPromise = check(
+          nodefn.lift(Inventory.find.bind(Inventory))(params),
+          'No matching inventory found').then(function(results) {
+      return _.map(results, function(r) {
+        return {
+          availabilityStatus: r.availabilityStatus(forDate, orderitem),
+          inventory: r
+        };
       });
-
-      if (!found) {
-        return cb(null, false);
-      }
-      cb(null, result);
+    }).catch(NotFoundError, function() {
+      return [];
+    }).catch(function(e) {
+      log.error('Unexpected error finding matching inventory for orderitem=%j, error=%s', orderitem, e, {});
+      return [];
     });
-  };
 
-  $module.exports.findOrderItemById = function(id, cb) {
-    log.info('Loading orderitem=%s', id);
-    Customer.findOne({ 'orders.orderitems._id': id }).exec(function(err, customer) {
-      if (err) {
-        return cb(err);
-      }
-
-      if (!customer) {
-        return cb(null, false);
-      }
-
-      log.info('Found customer=%j, orderitem=%s', customer, id, {});
-      var result = {};
-      result.customer = customer;
-
-      //FIXME just horrible - need I say more...
-      var found = false;
-      _.forEach(customer.orders, function(o) {
-        _.forEach(o.orderitems, function(oi) {
-          log.info('Inspecting orderitem=%j', oi, {});
-          if (oi.id === id) {
-            log.info('Found orderitem=%s', id);
-            result.orderitem = oi;
-            result.order = o;
-            found = true;
-            return false;
-          }
-        });
-
-        if (found) {
-          return false;
-        }
-      });
-
-      if (!found) {
-        return cb(null, false);
-      }
-      cb(null, result);
+    return when.join(assignedInventoryPromise, inventoryQueryPromise).then(function(results) {
+      results[0].inventories = results[1];
+      return results[0];
     });
-  };
+  }
 
+  $module.exports = {
+    NotFoundError: NotFoundError,
+    findReservationByOrderItem: findReservationByOrderItem,
+    findInventoryById: findInventoryById,
+    findCustomerById: findCustomerById,
+    findOrderById: findOrderById,
+    findOrderItemById: findOrderItemById,
+    findInventoryForOrderItemForDate: findInventoryForOrderItemForDate
+  };
   return $module.exports;
 };

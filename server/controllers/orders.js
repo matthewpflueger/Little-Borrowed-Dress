@@ -19,7 +19,7 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
 
 
   $module.exports.all = function(req, res) {
-    Customer.find().sort('-created').exec(function(err, customers) {
+    Customer.find().sort('-orders.forDate').exec(function(err, customers) {
       if (err) {
         res.render('error', { status: 500 });
       } else {
@@ -38,21 +38,21 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
     log.info('Adding to order=%j, orderitem=%j, customer=%j', order, req.body, customer, req.user);
 
     var orderitem = order.importOrderItem(req.body);
+    customer.addNote(req.body.note, req.user, 'OrderItem', orderitem);
     customer.save(function(err, customer) {
       if (err) {
         log.error('Failed to save customer=%j, error=%j', customer, err, req.user);
         return res.json(500, utils.errors.makeError(err, 'Failed to save'));
       }
 
-      var o = customer.findOrder(order);
-      var oi = o.findOrderItem(orderitem);
+      var coi = customer.findOrderItem(orderitem);
 
-      log.info('Added to order=%j, orderitem=%j, customer=%j', o, oi, customer, req.user);
+      log.info('Added to order=%j, orderitem=%j, customer=%j', coi.order, coi.orderitem, coi.customer, req.user);
 
       res.json({
-        customer: customer.toJSON(),
-        order: o.toJSON(),
-        orderitem: oi.toJSON()
+        customer: coi.customer.toJSON(),
+        order: coi.order.toJSON(),
+        orderitem: coi.orderitem.toJSON()
       });
     });
   };

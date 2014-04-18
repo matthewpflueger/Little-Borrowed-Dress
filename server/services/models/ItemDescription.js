@@ -49,6 +49,15 @@ module.exports = function $module(mongoose, uuid, crypto, helpers) {
     this.size = makeSize(rec.size || rec.Size || rec.SIZE);
   };
 
+  ItemDescriptionSchema.virtual('sku').get(function() {
+    var styleId = conf.get('style:' + this.style);
+    if (!styleId) {
+      styleId = '9999' + this.style;
+    }
+    return styleId + this.color + this.size.join('');
+  });
+
+
   var ItemDescription = mongoose.model('ItemDescription', ItemDescriptionSchema);
   $module.exports = ItemDescription;
   return ItemDescription;

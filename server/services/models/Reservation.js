@@ -46,7 +46,13 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer'
-    }
+    },
+
+    shippedOn: Date,
+    shippedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
   }, helpers.schemaOptions());
 
   function makeSpan(span) {
@@ -69,6 +75,16 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
     var m = moment(this.date);
     return m.add.apply(m, makeSpan(this.reservationSpan)).toDate();
   });
+
+  ReservationSchema.virtual('receiveBackBy').get(function() {
+    var m = moment(this.date);
+    return m.add('1 weeks').toDate();
+  });
+
+  ReservationSchema.methods.ship = function(user) {
+    this.shippedBy = user.id || user;
+    this.shippedOn = new Date();
+  };
 
   ReservationSchema.methods.make = function(customer, order, orderitem) {
     this.type = order.type;

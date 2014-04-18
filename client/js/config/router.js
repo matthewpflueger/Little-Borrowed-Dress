@@ -15,9 +15,9 @@ module.exports = function() {
         url: '/inventory',
         template: '<div ui-view><div ui-view>',
       })
-      .state('inventory.search', {
-        url: '/search',
-        templateUrl: 'views/inventory/search.html'
+      .state('inventory.manage', {
+        url: '/manage',
+        templateUrl: 'views/inventory/manage.html'
       })
       .state('inventory.manufacture', {
         url: '/manufacture',
@@ -32,9 +32,9 @@ module.exports = function() {
         template: '<div ui-view><div ui-view>',
         // templateUrl: 'views/orders.html'
       })
-      .state('orders.search', {
-        url: '/search',
-        templateUrl: 'views/orders/search.html'
+      .state('orders.manage', {
+        url: '/manage',
+        templateUrl: 'views/orders/manage.html'
       })
       .state('orders.upload', {
         url: '/upload',

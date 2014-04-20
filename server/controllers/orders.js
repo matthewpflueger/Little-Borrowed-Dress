@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx, router, commands) {
+module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx, router, commands, query) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -13,22 +13,22 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
   hl = hl || require('highland');
   rx = rx || require('rx');
   router = router || require('../commands/router')();
+  query = query || require('../services/query')();
   commands = commands || require('../commands/orderitem')();
   Customer = Customer || require('../services/models/Customer')();
   utils = utils || require('../utils')();
 
 
   $module.exports.all = function(req, res) {
-    Customer.find().sort('-orders.forDate').exec(function(err, customers) {
-      if (err) {
-        res.render('error', { status: 500 });
-      } else {
-        var responseObj = {
-          response: 'Success',
-          messages: customers
-        };
-        res.json(responseObj);
-      }
+    query.findCustomerOrdersByDate(req.query).then(function(r) {
+      res.json({
+        response: 'Success',
+        messages: r
+      });
+    }).catch(query.NotFoundError, function(e) {
+      res.json(404, utils.errors.makeError(e));
+    }).catch(function(e) {
+      res.json(500, utils.errors.makeError(e));
     });
   };
 

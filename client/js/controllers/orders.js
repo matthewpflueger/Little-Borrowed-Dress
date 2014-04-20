@@ -64,13 +64,69 @@ module.exports = function(_, moment) {
 
     });
 
+
+    $scope.enteredOrdersForDate = null;
+    $scope.limitToOptions = [10, 25, 50, 100, 200];
+    $scope.previousPagesForDate = [];
+
+    $scope.ordersQuery = {
+      inclusive: false,
+      ordersForDate: null,
+      limitTo: 10
+    };
+
+    //FIXME could use a directive here to keep ordersQuery.ordersForDate and input field in sync
+    //check out http://stackoverflow.com/questions/15242592/angular-js-how-to-autocapitalize-an-input-field/15253892#15253892
+    $scope.$watch('enteredOrdersForDate', function (dt) {
+      if (!dt || !/^(\d){2}\/(\d){2}\/(\d){4}$/.test(dt)) {
+        return;
+      }
+
+      $log.info('Saw update to enteredOrdersForDate %s', dt);
+      $scope.previousPagesForDate = [];
+      $scope.ordersQuery.ordersForDate = new Date(dt).toISOString();
+      $scope.all();
+    });
+
+    $scope.$watch('ordersQuery.limitTo', function() {
+
+      $scope.all();
+    });
+
+    $scope.nextPage = function() {
+      if (!$scope.orderData.length || !$scope.orderData[0].order) {
+        $log.warn('No orders to go to next page of');
+        return;
+      }
+
+      var oq = $scope.ordersQuery;
+
+      $scope.previousPagesForDate.push($scope.orderData[0].order.forDate);
+      oq.ordersForDate = $scope.orderData[$scope.orderData.length - 1].order.forDate;
+      oq.inclusive = false;
+      $scope.all();
+    };
+
+    $scope.previousPage = function() {
+      if (!$scope.previousPagesForDate.length) {
+        $log.error('Trying to go to previous page of orders when no previousPageForDate set');
+        return;
+      }
+
+      var oq = $scope.ordersQuery;
+      oq.ordersForDate = $scope.previousPagesForDate.pop();
+      oq.inclusive = true;
+      $scope.all();
+    };
+
     $scope.all = function() {
+      var oq = $scope.ordersQuery;
+      var config = { params: oq };
+
       $http
-        .get('/orders')
-        .success(function(data, status, headers, config) {
-          $log.info(
-            'Fetched orders=%O, status=%s, headers=%O, config=%O',
-            data, status, headers, config);
+        .get('/orders', config)
+        .success(function(data, status) {
+          $log.info('Fetched orders=%O, status=%s', data, status);
 
           // throw new Error('test error');
           $scope.response = data.response;
@@ -179,21 +235,23 @@ module.exports = function(_, moment) {
       enableColumnReordering: true,
       sortInfo: { fields: ['order.shipByDate'], directions: ['desc']},
       columnDefs: [
-        {field:'order.orderNumber', displayName:'Order', enableCellEdit: false, width: '90'},
-        {field:'order.shipByDate', displayName:'Ship By Date', enableCellEdit: false, width: '110', cellFilter: 'date'},
-        {field:'order.forDate', displayName:'For Date', enableCellEdit: true, width: '110', cellFilter: 'date'},
-        {field:'order.bride', displayName:'Bride', enableCellEdit: true, width: '150'},
-        {field:'orderitem.itemDescription[0].style', displayName:'Style', enableCellEdit: true, width: '70'},
-        {field:'orderitem.itemDescription[0].size', displayName:'Size', enableCellEdit: true, width: '70', cellFilter: 'join:" | "'},
-        {field:'orderitem.itemDescription[0].color', displayName:'Color', enableCellEdit: true, width: '70'},
-        {field:'orderitem.backup', displayName:'Backup', enableCellEdit: true, width: '70'},
-        {field:'customer.name', displayName: 'Name', enableCellEdit: true, width: '150'},
-        {field:'customer.email', displayName: 'Email', enableCellEdit: true, width: '150'},
-        {field:'customer.telephone', displayName: 'Phone', enableCellEdit: true, width: '100'},
-        {field:'order.shipTo[0].street', displayName: 'Street', enableCellEdit: true, width: '150'},
-        {field:'order.shipTo[0].city', displayName: 'City', enableCellEdit: true, width: '100'},
-        {field:'order.shipTo[0].state', displayName: 'State', enableCellEdit: true, width: '80'},
-        {field:'order.shipTo[0].zipcode', displayName: 'Zip', enableCellEdit: true, width: '50'},
+        {field:'order.orderNumber', displayName:'Order', enableCellEdit: false, width: 90},
+        {field:'order.shipByDate', displayName:'Ship By Date', enableCellEdit: false, width: 110, cellFilter: 'date'},
+        {field:'order.forDate', displayName:'For Date', enableCellEdit: true, width: 110, cellFilter: 'date'},
+        {field:'order.bride', displayName:'Bride', enableCellEdit: true, width: 150},
+        {field:'orderitem.itemDescription[0].style', displayName:'Style', enableCellEdit: true, width: 70},
+        {field:'orderitem.itemDescription[0].size', displayName:'Size', enableCellEdit: true, width: 70, cellFilter: 'join:" | "'},
+        {field:'orderitem.itemDescription[0].color', displayName:'Color', enableCellEdit: true, width: 70},
+        {field:'orderitem.backup', displayName:'Backup', enableCellEdit: true, width: 70},
+        {field:'customer.name', displayName: 'Name', enableCellEdit: true, width: 150},
+        {field:'customer.email', displayName: 'Email', enableCellEdit: true, width: 150},
+        {field:'customer.telephone', displayName: 'Phone', enableCellEdit: true, width: 100},
+        {field:'order.shipTo[0].street', displayName: 'Street', enableCellEdit: true, width: 150},
+        {field:'order.shipTo[0].city', displayName: 'City', enableCellEdit: true, width: 100},
+        {field:'order.shipTo[0].state', displayName: 'State', enableCellEdit: true, width: 80},
+        {field:'order.shipTo[0].zipcode', displayName: 'Zip', enableCellEdit: true, width: 50},
+        {field:'orderitem.shippedOn', displayName: 'Shipped On', enableCellEdit: false, width: 110, cellFilter: 'date'},
+        {field:'orderitem.receivedBackOn', displayName: 'Received Back', enableCellEdit: false, width: 110, cellFilter: 'date'}
       ]
     };
 
@@ -279,7 +337,7 @@ module.exports = function(_, moment) {
           !$scope.hasAssignedInventory()) {
         isReservable = true;
       }
-      $log.info('Determining isInventoryReservable=%s, inventorySelections=%O', isReservable, $scope.inventorySelections[0]);
+      // $log.info('Determining isInventoryReservable=%s, inventorySelections=%O', isReservable, $scope.inventorySelections[0]);
       return isReservable;
     };
 
@@ -289,7 +347,7 @@ module.exports = function(_, moment) {
           $scope.orderSelections[0].orderitem.inventory) {
         isAssigned = true;
       }
-      $log.info('Determining hasAssignedInventory=%s, orderSelections=%O', isAssigned, $scope.orderSelections[0]);
+      // $log.info('Determining hasAssignedInventory=%s, orderSelections=%O', isAssigned, $scope.orderSelections[0]);
       return isAssigned;
     };
 

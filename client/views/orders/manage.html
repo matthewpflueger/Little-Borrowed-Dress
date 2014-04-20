@@ -1,5 +1,5 @@
 <div data-ng-controller="OrderController" data-ng-init="all()">
-  <div class=".container">
+  <div class="container">
     <div class="row gridheader">
       <div class="col-md-6">
         <h4>Inventory</h4>
@@ -80,23 +80,48 @@
 
     <div class="row gridheader">
       <div class="col-md-6">
-          <div class="btn-group">
-            <button
-                class="btn btn-default btn-xs"
-                data-ng-click="addOrder()">
-              Add Order
-            </button>
-          </div>
+          <form class="form-inline" data-role="form">
+            <div class="form-group">
+              <label class="sr-only" for="ordersForDate">Orders For Date</label>
+              <input type="datetime" data-ng-model="enteredOrdersForDate" id="ordersForDate" placeholder="Orders For Date">
+            </div>
+            <div class="form-group">
+              <label class="sr-only" for="limitTo">Limit</label>
+              <select data-ng-model="ordersQuery.limitTo" data-ng-options="lto for lto in limitToOptions">
+                <option>10</option>
+              </select>
+            </div>
+          </form>
       </div>
       <div class="col-md-6">
-        <button
-            type="button"
-            class="btn btn-default btn-xs pull-right"
-            data-toggle="tooltip"
-            data-placement="left" title="Refresh order items"
-            data-ng-click="all()">
-          Refresh
-        </button>
+        <div class="pull-right">
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Previous page"
+              data-ng-click="previousPage()"
+              data-ng-disabled="!previousPagesForDate.length">
+            &lt;&lt;&lt;
+          </button>
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Next page"
+              data-ng-click="nextPage()"
+              data-ng-disabled="!orderData.length">
+            &gt;&gt;&gt;
+          </button>
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Refresh order items"
+              data-ng-click="all()">
+            Refresh
+          </button>
+        </div>
       </div>
     </div>
     <div class="row">

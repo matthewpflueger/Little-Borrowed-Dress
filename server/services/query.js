@@ -64,6 +64,23 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
           'Not found reservation for order item ' + orderitem);
   }
 
+  function findCustomerOrdersByDate(limitBy) { //forDate, limitTo) {
+    limitBy = limitBy || {};
+
+    var query = Customer.find();
+    if (limitBy.ordersForDate) {
+      query = query.where('orders.forDate');
+      if (limitBy.inclusive === 'true' || limitBy.inclusive === true) {
+        query = query.lte(limitBy.ordersForDate);
+      } else {
+        query = query.lt(limitBy.ordersForDate);
+      }
+    }
+    query = query.sort('-orders.forDate').limit(limitBy.limitTo || 25);
+
+    return check(nodefn.lift(query.exec.bind(query))(), 'No customer orders found');
+  }
+
   function findInventoryForOrderItemForDate(orderitem, forDate, limitBy) {
     limitBy = limitBy || { style: true, color: true, size: true};
     log.info(
@@ -134,6 +151,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
 
   $module.exports = {
     NotFoundError: NotFoundError,
+    findCustomerOrdersByDate: findCustomerOrdersByDate,
     findReservationByOrderItem: findReservationByOrderItem,
     findInventoryById: findInventoryById,
     findCustomerById: findCustomerById,

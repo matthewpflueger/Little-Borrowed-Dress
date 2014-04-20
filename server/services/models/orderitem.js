@@ -32,11 +32,21 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
+    receivedBackOn: Date,
+    receivedBackBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
   }, helpers.schemaOptions());
 
   OrderItemSchema.methods.ship = function(user) {
     this.shippedOn = new Date();
     this.shippedBy = user.id || user;
+  };
+
+  OrderItemSchema.methods.receiveBack = function(user) {
+    this.receivedBackOn = new Date();
+    this.receivedBackBy = user;
   };
 
   OrderItemSchema.methods.unassign = function(inventory, force) {

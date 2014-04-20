@@ -43,7 +43,14 @@ module.exports = function $module(mongoose, moment, _, utils, Address, OrderItem
     orderitems: {
       type: [OrderItem.schema],
       required: true
-    }
+    },
+
+    importedOn: Date,
+    importedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    importHashes: [String]
   }, helpers.schemaOptions());
 
   OrderSchema.index({ orderNumber: 1, bride: 1, forDate: -1});

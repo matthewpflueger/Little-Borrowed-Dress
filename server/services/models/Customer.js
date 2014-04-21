@@ -38,6 +38,12 @@ module.exports = function $module(mongoose, uuid, _, utils, Order, Note, helpers
       required: true
     },
     notes: [Note.schema],
+
+    importedOn: Date,
+    importedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
   }, helpers.schemaOptions({ collection: 'customers' }));
 
   CustomerSchema.index({ name: 1, email: 1, telephone: 1});
@@ -82,14 +88,33 @@ module.exports = function $module(mongoose, uuid, _, utils, Order, Note, helpers
     return result;
   };
 
-  CustomerSchema.methods.import = function(rec) {
-    this.name = rec['SHIP TO NAME'];
-    this.email = rec.EMAIL;
-    this.telephone = utils.number.makeNumber(rec.TELEPHONE);
+  CustomerSchema.methods.findOrderByNumber = function(orderNumber) {
+    return _.find(this.orders, function(o) {
+      return o.orderNumber.toString() === orderNumber.toString();
+    });
+  };
+
+  CustomerSchema.methods.import = function(rec, user) {
+    this.importedOn = new Date();
+    this.importedBy = user.id || user;
+
+    this.name = rec['ACCOUNT First Name'] + ' ' + rec['ACCOUNT Last Name'];
+    if (!this.name || /^\s*$/.test(this.name)) {
+      this.name = rec['Bill to Name'];
+    }
+    this.email = rec['ACCOUNT Email'];
+    if (!this.email || /^\s*$/.test(this.email)) {
+      this.email = uuid.v4() + '@unknown.com';
+    }
+    this.telephone = utils.number.makeNumber(rec['BILLING Telephone #']);
+
+    log.debug('Imported customer=%j', this.toJSON(), user);
 
     var order = this.orders.create({});
+    order.import(rec, user);
     this.orders.push(order);
-    return order.import(rec);
+
+    return this;
   };
 
   CustomerSchema.methods.addNote = function(note, author, type, ref) {

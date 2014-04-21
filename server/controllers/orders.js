@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx, router, commands, query) {
+module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx, router, cmds, query) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -14,7 +14,7 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
   rx = rx || require('rx');
   router = router || require('../commands/router')();
   query = query || require('../services/query')();
-  commands = commands || require('../commands/orderitem')();
+  cmds = cmds || require('../commands/orderitem')();
   Customer = Customer || require('../services/models/Customer')();
   utils = utils || require('../utils')();
 
@@ -26,7 +26,7 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
         messages: r
       });
     }).catch(query.NotFoundError, function(e) {
-      res.json(404, utils.errors.makeError(e));
+      res.json(404, utils.errors.makeError(e, null, 404));
     }).catch(function(e) {
       res.json(500, utils.errors.makeError(e));
     });
@@ -37,7 +37,7 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
     var order = req.order;
     log.info('Adding to order=%j, orderitem=%j, customer=%j', order, req.body, customer, req.user);
 
-    var orderitem = order.importOrderItem(req.body);
+    var orderitem = order.addOrderItem(req.body);
     customer.addNote(req.body.note, req.user, 'OrderItem', orderitem);
     customer.save(function(err, customer) {
       if (err) {
@@ -80,54 +80,66 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
   $module.exports.upload = function (req, res) {
     res.setHeader('Content-Type', 'text/html');
 
-    var fileUploadMessage = '';
-
     var busboy = new Busboy({ headers: req.headers });
     var fn = null;
-    var messages = {};
+    var customersById = {};
     var promises = [];
-
 
     busboy.on('file', function(fieldname, file, filename) {
       fn = filename;
       csv
         .fromStream(file, {headers : true})
         .on('record', function(data){
-          if (data.SIZE) {
-            data.SIZE = data.SIZE.split('&quot;').join('');
+          //Seriously crappy data export causes issues when converting to JSON
+          if (data.Size) {
+            data.Size = data.Size.split('&quot;').join('');
+          }
+          if (data['Free 2nd Size']) {
+            data['Free 2nd Size'] = data['Free 2nd Size'].split('&quot;').join('');
           }
 
-          promises.push(router.ask(new commands.ImportOrderItem(data)));
+          promises.push(router.ask(new cmds.ImportOrderItems(data, req.user), 60000));
         })
         .on('end', function() {
-          fileUploadMessage = fn + ' uploaded to the server at ' + new Date().toString();
-          log.info(fileUploadMessage);
+          log.info('Order items uploaded to server file=%s, rows=%s', fn, promises.length, req.user);
+
           when.settle(promises).then(function (results) {
+            log.info('Upload of order items complete results.length=%s', results.length, req.user);
+            log.debug('Upload of order items complete results=%j', results, req.user);
+
             results.forEach(function(r) {
               if (r.state === 'rejected') {
-                log.info('Add order item rejected with ', r.reason);
-              } else {
-                var customer = r.value.content.customer;
-                var order = r.value.content.order;
-                var orderitem = r.value.content.orderitem;
-                log.info(
-                  'Added orderitem=%s, order=%s, customer=%s, customer.__v=%s',
-                  orderitem.hash, order.orderNumber, customer.email, customer.__v);
-                if (!messages[customer.id] || messages[customer.id].customer.__v < customer.__v) {
-                  messages[customer.id] = r.value.content;
-                }
+                log.warn('Add order item rejected reason=%j', r.reason, req.user);
+                return;
+              }
+
+
+              var content = r.value.content;
+              var status = content.status;
+              var message = content.message;
+              var customer = content.customer;
+              if (!customer || !customer.id) {
+                log.warn(
+                  'Failed to created orderitem status=%s, message=%s, error=%s',
+                  status, message, content.error, req.user);
+                return;
+              }
+
+              log.info(
+                'Created orderitem status=%s, message=%s, customer=%s',
+                status, message, customer.id, req.user);
+
+              if (!customersById[customer.id] || customersById[customer.id].__v < customer.__v) {
+                customersById[customer.id] = customer; //r.value.content;
               }
             });
 
-            messages = _.values(messages);
-            var responseObj = {
-              response: fileUploadMessage,
-              messages: messages
-            };
-
-            console.log('Done parsing form!');
-            res.send(JSON.stringify(responseObj));
-
+            var vals = _.values(customersById);
+            log.info('Uploaded orderitems for customers=%s', vals.length, req.user);
+            res.json(vals);
+          }).catch(function(e) {
+            log.error('Failed processing upload responses error=%s', e.toString(), req.user);
+            res.json(500, utils.errors.makeError(e));
           });
         });
     });

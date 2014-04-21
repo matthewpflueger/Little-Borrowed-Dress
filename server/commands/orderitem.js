@@ -5,27 +5,29 @@ module.exports = function $module() {
     return $module.exports;
   }
 
-  function ImportOrderItem(data, options) {
+  function ImportOrderItems(data, user, options) {
     options = options || {};
-    this.routingKey = options.routingKey || ImportOrderItem.routingKey;
+    this.routingKey = options.routingKey || ImportOrderItems.routingKey;
     this.data = data;
+    this.user = user;
   }
-  ImportOrderItem.routingKey = 'commands.orderitem.import';
+  ImportOrderItems.routingKey = 'commands.orderitems.import';
 
-  function OrderItemImported(status, message, customer, order, orderitem, options) {
+  function OrderItemsImported(status, message, customer, order, orderitems, user, options) {
     options = options || {};
-    this.routingKey = options.routingKey || OrderItemImported.routingKey;
+    this.routingKey = options.routingKey || OrderItemsImported.routingKey;
     this.status = status;
     this.message = message;
-    this.customer = customer.toJSON();
-    this.order = order.toJSON();
-    this.orderitem = orderitem.toJSON();
+    this.customer = customer; //.toJSON();
+    this.order = order; //.toJSON();
+    this.orderitems = orderitems;
+    this.user = user;
   }
-  OrderItemImported.routingKey = 'events.orderitem.import';
+  OrderItemsImported.routingKey = 'events.orderitems.import';
 
   $module.exports = {
-    ImportOrderItem: ImportOrderItem,
-    OrderItemImported: OrderItemImported
+    ImportOrderItems: ImportOrderItems,
+    OrderItemsImported: OrderItemsImported
   };
 
   return $module.exports;

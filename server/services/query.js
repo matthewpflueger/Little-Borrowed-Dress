@@ -16,7 +16,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
 
   function check(promise, message) {
     return promise.then(function(r) {
-      if (!r) {
+      if (!r || r.length === 0) {
         throw new NotFoundError(message);
       }
       return r;
@@ -33,6 +33,18 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
     return check(
         nodefn.lift(Inventory.findOne.bind(Inventory))({ _id: id }),
         'Inventory not found with id ' + id);
+  }
+
+  function findCustomerByPhone(phone) {
+    return check(
+        nodefn.lift(Customer.find.bind(Customer))({ telephone: phone }),
+        'Customer not found with phone ' + phone);
+  }
+
+  function findCustomerByEmail(email) {
+    return check(
+        nodefn.lift(Customer.findOne.bind(Customer))({ email: email }),
+        'Customer not found with email ' + email);
   }
 
   function findCustomerById(id) {
@@ -151,6 +163,8 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
 
   $module.exports = {
     NotFoundError: NotFoundError,
+    findCustomerByPhone: findCustomerByPhone,
+    findCustomerByEmail: findCustomerByEmail,
     findCustomerOrdersByDate: findCustomerOrdersByDate,
     findReservationByOrderItem: findReservationByOrderItem,
     findInventoryById: findInventoryById,

@@ -5,8 +5,16 @@ module.exports = function $module() {
     return $module.exports;
   }
 
+  function makeDollar(dollarString) {
+    var num = makeNumber(dollarString);
+    if (!/\./.test(dollarString)) {
+      return num * 100;
+    }
+    return num;
+  }
+
   function makeNumber(numberString) {
-    numberString = numberString || 0;
+    numberString = numberString || '0';
     var num = parseInt(numberString.split(/\D/).join(''));
     if (isNaN(num)) {
       return 0;
@@ -16,6 +24,7 @@ module.exports = function $module() {
   }
 
   $module.exports = {
+    makeDollar: makeDollar,
     makeNumber: makeNumber
   };
   return $module.exports;

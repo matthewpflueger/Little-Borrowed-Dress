@@ -8,13 +8,13 @@ module.exports = function(_, moment) {
   function OrderController($scope, $log, $http) {
 
     function findEntity(customer, orderitemId) {
-      return _.find(makeOrderitemRows(customer), function(e) {
+      return _.find(makeOrderItemRows(customer), function(e) {
         return orderitemId === e.orderitem.id;
       });
     }
 
-    function makeOrderitemRows(customer) {
-      // $log.info('makeOrderitemRows customer=%O', customer);
+    function makeOrderItemRows(customer) {
+      // $log.info('makeOrderItemRows customer=%O', customer);
       var rows = [];
       _.forEach(customer.orders, function(order) {
         _.forEach(order.orderitems, function(orderitem) {
@@ -89,7 +89,6 @@ module.exports = function(_, moment) {
     });
 
     $scope.$watch('ordersQuery.limitTo', function() {
-
       $scope.all();
     });
 
@@ -134,11 +133,20 @@ module.exports = function(_, moment) {
           var rows = [];
 
           _.forEach(data.messages, function(c) {
-            rows = rows.concat(makeOrderitemRows(c));
+            rows = rows.concat(makeOrderItemRows(c));
           });
 
           $scope.orderData = rows;
+          //FIXME seriously bad - passing a value via a third party object and then clearing it :(
+          $scope.ordersQuery.ordersForDate = null;
         }).error(function(data, status) {
+          //FIXME seriously bad - passing a value via a third party object and then clearing it :(
+          $scope.ordersQuery.ordersForDate = null;
+          if (status === 404) {
+            $log.info('No orders found');
+            $scope.orderData = [];
+            return;
+          }
           $log.error('Failed to fetch orders data=%O, status=%s', data, status);
           var error = new Error('Failed to fetch orders');
           error.data = { data: data, status: status };
@@ -206,13 +214,14 @@ module.exports = function(_, moment) {
       $scope.isUploading = true;
     };
 
-    $scope.uploadComplete = function (content) {
+    $scope.uploadComplete = function(customers) {
+      $log.info('Completed upload of order items');
       $scope.isUploading = false;
-      $scope.response = content.response;
+      global.jQuery('#uploadOrderItemsModal').modal('hide');
 
       var orders = [];
-      content.messages.forEach(function(m) {
-        orders = orders.concat(makeOrderitemRows(m.customer)); //, m.order, m.orderitem));
+      customers.forEach(function(c) {
+        orders = orders.concat(makeOrderItemRows(c));
       });
 
       $scope.orderData = orders;

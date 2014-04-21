@@ -78,22 +78,36 @@
       </div> <!-- col -->
     </div> <!-- row -->
 
+
+    <!-- Actions for main grid -->
     <div class="row gridheader">
-      <div class="col-md-6">
-          <form class="form-inline" data-role="form">
-            <div class="form-group">
-              <label class="sr-only" for="ordersForDate">Orders For Date</label>
-              <input type="datetime" data-ng-model="enteredOrdersForDate" id="ordersForDate" placeholder="Orders For Date">
-            </div>
-            <div class="form-group">
-              <label class="sr-only" for="limitTo">Limit</label>
-              <select data-ng-model="ordersQuery.limitTo" data-ng-options="lto for lto in limitToOptions">
-                <option>10</option>
-              </select>
-            </div>
-          </form>
+      <div class="col-md-4">
+        <div class="btn-group">
+          <button
+              class="btn btn-default btn-xs"
+              data-toggle="modal"
+              data-target="#uploadOrderItemsModal">
+            Upload Order Items
+          </button>
+        </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
+        <div class="pull-right">
+        <form class="form-inline" data-role="form">
+          <div class="form-group">
+            <label class="sr-only " for="ordersForDate">Orders For Date</label>
+            <input class="thin" type="datetime" data-ng-model="enteredOrdersForDate" id="ordersForDate" placeholder="Orders For Date">
+          </div>
+          <div class="form-group">
+            <label class="sr-only" for="limitTo">Limit</label>
+            <select data-ng-model="ordersQuery.limitTo" data-ng-options="lto for lto in limitToOptions">
+              <option>10</option>
+            </select>
+          </div>
+        </form>
+        </div>
+      </div>
+      <div class="col-md-4">
         <div class="pull-right">
           <button
               type="button"
@@ -124,13 +138,61 @@
         </div>
       </div>
     </div>
+
+    <!-- Main grid -->
     <div class="row">
       <div class="col-md-12">
         <div class="gridStyle" data-ng-grid="gridOptions"></div>
       </div>
     </div>
-  </div>
 
+
+    <!-- Upload order items -->
+<!--
+    <div class="row">
+      <div class="col-md-12">
+        <form data-ng-upload="uploadComplete(content)" data-ng-upload-loading="startUploading()" action="/orders/upload" data-role="form">
+          <div class="form-group">
+            <label for="orderFile">Order csv file</label>
+            <input type="file" name="file" id="orderFile">
+            <p class="help-block">Select the csv file that contains the orders.</p>
+          </div>
+          <button type="submit" class="btn btn-default" data-ng-model="button" data-ng-disabled="isUploading">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+ -->
+
+  <!-- Upload order items modal -->
+  <div class="modal fade" id="uploadOrderItemsModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" data-aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Upload Order Items</h4>
+        </div>
+        <div class="modal-body">
+          <form data-ng-upload="uploadComplete(content)" data-ng-upload-loading="startUploading()" action="/orders/upload" data-role="form">
+            <div class="form-group">
+              <label for="orderFile">Order csv file</label>
+              <input type="file" name="file" id="orderFile">
+              <p class="help-block">Select the csv file that contains the orders.</p>
+            </div>
+            <button type="submit" class="btn btn-default" data-ng-model="button" data-ng-disabled="isUploading">Submit</button>
+          </form>
+        </div>
+<!--
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" data-ng-click="addOrderItem(newOrderItem)">Upload</button>
+        </div>
+ -->
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+
+  <!-- Add Order Item modal -->
   <div class="modal fade" id="addOrderItemModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">

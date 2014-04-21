@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
+module.exports = function $module(mongoose, crypto, ItemDescription, helpers, utils) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -9,6 +9,7 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
   crypto = crypto || require('crypto');
   ItemDescription = ItemDescription || require('./ItemDescription')();
   helpers = helpers || require('./helpers')();
+  utils = utils || require('../../utils')();
 
   var OrderItemSchema = new mongoose.Schema({
     createdOn: {
@@ -27,6 +28,8 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
     },
     inventory: { type: mongoose.Schema.Types.ObjectId, ref: 'Inventory' },
 
+    originalPrice: Number,
+
     shippedOn: Date,
     shippedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -34,6 +37,12 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
     },
     receivedBackOn: Date,
     receivedBackBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+
+    importedOn: Date,
+    importedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
@@ -68,13 +77,27 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers) {
     return true;
   };
 
-  OrderItemSchema.methods.import = function(rec) {
+  OrderItemSchema.methods.import = function(rec, backup, user) {
+    this.importedOn = new Date();
+    this.importedBy = user.id || user;
+
+    this.backup = backup;
+    this.originalPrice = utils.number.makeDollar(rec['ORIGINAL PRICE']);
+    log.debug('Imported orderitem=%j', this.toJSON(), user);
+
     var desc = this.itemDescription.create({});
-    desc.import(rec);
+    desc.import(rec, backup);
     this.itemDescription.push(desc);
 
-    this.backup = /\S+/.test(rec.backup || rec['BACKUP?']);
+    return this;
   };
+
+  OrderItemSchema.virtual('sku').get(function() {
+    if (this.itemDescription && this.itemDescription[0]) {
+      return this.itemDescription[0].sku;
+    }
+    return '';
+  });
 
   var OrderItem = mongoose.model('OrderItem', OrderItemSchema);
   $module.exports = OrderItem;

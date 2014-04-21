@@ -104,13 +104,14 @@ module.exports = function $module(amqp, when, uuid, utils, config) {
         new Buffer(response),
         { correlationId: msg.properties.correlationId });
 
+      ch.ack(msg);
       if (!published) {
         log.error('Failed to reply to message=%s, response=%s', msg.properties.correlationId, response, {});
         return when.reject('Failed to publish command, channel full');
       }
 
       log.info('Replied to message=%s, response=%s', msg.properties.correlationId, response, {});
-      ch.ack(msg);
+      // ch.ack(msg);
 
       return when.resolve(true);
     });
@@ -168,7 +169,7 @@ module.exports = function $module(amqp, when, uuid, utils, config) {
       log.info('Published command=%s, timeoutIn=%s', command.routingKey, timeoutIn);
       return d.promise;
     }).timeout(timeoutIn).catch(function(e) {
-      log.error('Failed to ask command=%j, error=%s', command, e, command.user);
+      log.error('Failed to ask command=%j, error=%j', command, e, command.user);
       throw e;
     }).finally(function() {
       delete correlations[correlationId];
@@ -183,22 +184,24 @@ module.exports = function $module(amqp, when, uuid, utils, config) {
         return ch.bindQueue(queue, config.get('exchange'), routingKey).then(function() { return queue; });
       }).then(function(queue) {
         return ch.consume(queue, function(msg) {
-          msg.content = JSON.parse(msg.content.toString());
-          var p = cb(msg);
-          return p.then(function(res) {
-            reply(msg, res);
+          return when.try(JSON.parse, msg.content.toString())
+            .then(function(c) {
+              msg.content = c;
+              return when.try(cb, msg);
+            }).then(function(res) {
+              reply(msg, res);
 
-            if (res && res.routingKey && /^events/.test(res.routingKey)) {
-              tell(res);
-            }
-          }).catch(function(e) {
-            if (e.constructor && /^NotFound/.test(e.constructor.name)) {
-              reply(msg, utils.errors.makeError(e, null, 404));
-            } else {
-              log.error('Unexpected error handling message=%j, error=%s', msg, e, msg.content.user);
-              reply(msg, utils.errors.makeError(e));
-            }
-          });
+              if (res && res.routingKey && /^events/.test(res.routingKey)) {
+                tell(res);
+              }
+            }).catch(function(e) {
+              if (e.constructor && /^NotFound/.test(e.constructor.name)) {
+                reply(msg, utils.errors.makeError(e, null, 404));
+              } else {
+                log.error('Unexpected error handling message=%j, error=%s', msg, e, msg.content.user);
+                reply(msg, utils.errors.makeError(e));
+              }
+            });
         });
       });
     });

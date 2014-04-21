@@ -23,6 +23,7 @@ module.exports = function $module(express, path, os, helpers, passport) {
   app.locals.cache = conf.get('cache');
 
   app.use(require('./middleware/logger')());
+  app.use(require('compression')());
   app.use(require('body-parser')());
   app.use(require('method-override')());
   app.use(require('cookies').express([conf.get('secret')]));

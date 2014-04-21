@@ -9,7 +9,7 @@ module.exports = function $module() {
     return {
       status: status || 500,
       message: message || err.message || err.toString(),
-      cause: err.toString()
+      error: err.toString()
     };
   }
 

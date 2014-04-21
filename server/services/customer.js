@@ -1,83 +1,132 @@
 'use strict';
 
-module.exports = function $module(router, Customer, cmds, utils) {
+module.exports = function $module(when, nodefn, query, router, Customer, cmds, utils) {
   if ($module.exports) {
     return $module.exports;
   }
 
+  when = when || require('when');
+  nodefn = nodefn || require('when/node');
+
+  query = query || require('./query')();
   router = router || require('../commands/router')();
   Customer = Customer || require('./models/Customer')();
   cmds = cmds || require('../commands/orderitem')();
   utils = utils || require('../utils')();
 
 
-  function importOrderItem(msg) {
-    var corrId = msg.properties.correlationId;
-    log.info('Importing order item from message=%s', corrId);
+  // function shipInventory(msg) {
+  //   log.info('About to ship inventory msg=%j', msg, msg.content.user);
+
+  //   return when.join(
+  //     query.findReservationByOrderItem(msg.content.orderitem),
+  //     query.findOrderItemById(msg.content.orderitem)
+  //   ).then(function(results) {
+  //     log.info('Results=%j', results, msg.content.user);
+  //     var i = results[0];
+  //     var coi = results[1];
+
+  //     coi.orderitem.ship(msg.content.user);
+  //     i.shipForReservation(coi.orderitem, msg.content.user);
+
+  //     log.info('About to save ship for inventory=%j, customer=%j', i, coi.customer, {});
+  //     return when.join(
+  //       nodefn.lift(i.save.bind(i))(),
+  //       nodefn.lift(coi.customer.save.bind(coi.customer))()
+  //     ).then(function(results) {
+  //       log.info('Results=%j', results, msg.content.user);
+  //       var i = results[0][0];
+  //       var r = results[1][0].findOrderItem(coi.orderitem);
+
+  //       return new cmds.InventoryShipped(
+  //         i.availabilityStatus(r.order.forDate, r.orderitem),
+  //         i,
+  //         r.customer,
+  //         r.order,
+  //         r.orderitem);
+  //     }).catch(function(e) {
+  //       coi.orderitem.shippedOn = undefined;
+  //       coi.orderitem.shippedBy = undefined;
+  //       i.revertShipForReservation(coi.orderitem);
+
+  //       coi.customer.save();
+  //       i.save();
+  //       throw e;
+  //     });
+  //   });
+  // }
+
+  function importOrderItems(msg) {
+    var user = msg.content.user;
+    log.info('Importing order item from msg=%j', msg, user);
 
     var rec = msg.content.data;
-    Customer.findOne({ email: rec.EMAIL.trim() }, function(err, customer) {
-      if (err) {
-        log.error('Error finding customer=%s, error=%s, message=%s', rec.EMAIL, err, corrId);
-        router.reply(msg, utils.errors.makeError(err));
-        return;
+
+    function createResults(customer, order, orderitems, status, message) {
+      log.debug(
+        'Creating import result customer=%j, order=%j, orderitems=%j, status=%s, message=%s',
+        customer, order, orderitems, status, message);
+
+      order = order || customer.orders[0];
+      orderitems = orderitems || order.orderitems;
+      status = status || 201;
+      message = message || 'Order items created';
+      return new cmds.OrderItemsImported(status, message, customer, order, orderitems, user);
+    }
+
+    function newCustomer() {
+      log.info('Creating new customer from msg=%j', msg, user);
+      var customer = new Customer();
+      customer.import(rec, user);
+      return createResults(customer);
+    }
+
+    function newOrder(customer) {
+      var order = customer.findOrderByNumber(rec['Order #']);
+      if (order) {
+        return newOrderItems(customer, order);
       }
 
-      var numOrderItems = 0;
-      var order = null;
-      var orderitem = null;
-      if (!customer) {
-        log.info('Creating new customer=%s, message=%s', rec.EMAIL, corrId);
-        customer = new Customer();
-        orderitem = customer.import(rec);
-        order = customer.orders[0];
-      } else {
-        var orderNumber = utils.number.makeNumber(rec.ORDER);
-        var orders = customer.orders.filter(function(o) { return o.orderNumber === orderNumber; });
+      log.info('Creating new order from msg=%j', msg, user);
+      order = customer.orders.create({});
+      order.import(rec, user);
+      customer.orders.push(order);
+      return createResults(customer, order);
+    }
 
-        if (!orders.length) {
-          log.info('Creating new order=%s, customer=%s, message=%s', orderNumber, customer.email, corrId);
-          order = customer.orders.create({});
-          customer.orders.push(order);
-          orderitem = order.import(rec);
-        } else {
-          order = orders[0];
-          numOrderItems = order.orderitems.length;
-          log.info('Found order=%s, customer=%s, message=%s', order.orderNumber, customer.email, corrId);
-          orderitem = order.importOrderItem(rec);
-        }
+    function newOrderItems(customer, order) {
+      log.info('Creating new order items for customer=%j, order=%j, msg=%j', customer, order, msg, user);
+      var numOrderItems = order.orderitems.length;
+      var orderitems = order.importOrderItems(rec, user);
+      if (numOrderItems === order.orderitems.length) {
+        log.warn('No order items imported customer=%j, order=%j, msg=%j', customer, order, msg, user);
+        return createResults(customer, order, orderitems, 304, 'No order items imported');
       }
+      return createResults(customer, order, orderitems);
+    }
 
-      if (numOrderItems < order.orderitems.length) {
-        customer.save(function(err, c) {
-          if (err) {
-            log.error('Error saving customer=%s, error=%s, message=%s', customer.email, err, corrId);
-            router.reply(msg, utils.errors.makeError(err));
-          } else {
-            log.info(
-              'Imported orderitem=%s, order=%s, customer=%s, message=%s',
-              orderitem.hash,
-              order.orderNumber,
-              customer.email,
-              corrId);
-            var res = new cmds.OrderItemImported(201, 'Order item created', c, order, orderitem);
-            router.reply(msg, res);
-            router.tell(res);
+    return query.findCustomerByEmail(rec['ACCOUNT Email'])
+        .then(newOrder)
+        .catch(query.NotFoundError, function() {
+          var phone = utils.number.makeNumber(rec['BILLING Telephone #']);
+          log.info('Customer not found by email, trying telephone=%s', phone, user);
+
+          return query.findCustomerByPhone(phone).then(function(results) {
+            if (results.length > 1) {
+              log.error('Could not locate distince customer for import with telephone=%s, msg=%j', phone, msg, user);
+              throw new Error('Could not locate distinct customer for import with telephone=%s', phone);
+            }
+            return newOrder(results[0]);
+          }).catch(query.NotFoundError, newCustomer);
+        }).then(function(r) {
+          if (r.status !== 201) {
+            return r;
           }
+          return nodefn.lift(r.customer.save.bind(r.customer))().then(function() { return r; });
         });
-      } else {
-        log.info(
-          'Already exists orderitem=%s, order=%s, customer=%s, message=%s',
-          orderitem.hash,
-          order.orderNumber,
-          customer.email,
-          corrId);
-        router.reply(msg, new cmds.OrderItemImported(304, 'Order item already exists', customer, order, orderitem));
-      }
-    });
   }
 
-  router.receive(cmds.ImportOrderItem.routingKey, importOrderItem);
+  router.receive(cmds.ImportOrderItems.routingKey, importOrderItems);
 
   $module.exports = {};
   return {};

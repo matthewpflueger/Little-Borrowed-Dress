@@ -68,6 +68,12 @@ module.exports = function $module(os, path, nconf) {
       'ngGridPath': path.join(rootPath, 'node_modules', 'ng-grid'),
       'cssDirPath': path.join(rootPath, 'client', 'css'),
       'tmpCssDirPath': path.join(os.tmpDir(), 'css-cache'),
+      'browserify': {
+        'cache': true,
+        'minify': false,
+        'gzip': false,
+        'debug': true
+      }
     });
 
   global.conf = nconf;

@@ -1,8 +1,32 @@
 'use strict';
 
-module.exports = function() {
+module.exports = function(_, moment) {
 
-  function InventoryController($scope) {
+  _ = _ || require('lodash');
+  moment = moment || require('moment');
+
+  function InventoryController($scope, $log, $http) {
+    // function findEntity(customer, orderitemId) {
+    //   return _.find(makeOrderItemRows(customer), function(e) {
+    //     return orderitemId === e.orderitem.id;
+    //   });
+    // }
+
+    // function makeOrderItemRows(customer) {
+    //   // $log.info('makeOrderItemRows customer=%O', customer);
+    //   var rows = [];
+    //   _.forEach(customer.orders, function(order) {
+    //     _.forEach(order.orderitems, function(orderitem) {
+    //       rows.push({
+    //         customer: customer,
+    //         order: order,
+    //         orderitem: orderitem
+    //       });
+    //     });
+    //   });
+    //   return rows;
+    // }
+
     $scope.isUploading = false;
     $scope.startUploading = function() {
       $scope.isUploading = true;

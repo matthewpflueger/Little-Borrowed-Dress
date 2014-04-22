@@ -51,8 +51,8 @@ module.exports = function $module(os, path, nconf) {
         'timestamp': false
       },
 
-      'db': 'mongodb://localhost/lbd',
-      'amqp': 'amqp://localhost',
+      'db': 'mongodb://root:l87Zq0IzYCMt@localhost/lbd',
+      'amqp': 'amqp://root:FfWTA5ApprJ9@localhost',
       'exchange': 'lbd',
       'port': 8000,
       'jsMain': '/js/app.js',

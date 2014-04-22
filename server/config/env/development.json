@@ -1,6 +1,7 @@
 {
   "appName": "Development - Little Borrowed Dress",
   "db": "mongodb://localhost/lbd-dev",
+  "amqp": "amqp://localhost",
   "logentries": {
     "enable": false
   },

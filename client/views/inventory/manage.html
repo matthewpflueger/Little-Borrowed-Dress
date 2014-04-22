@@ -1,59 +1,295 @@
-<div data-ng-controller="OrderController" data-ng-init="all()">
-  <div class=".container-fluid" data-ng-hide="orderSelections.length == 0">
+<div data-ng-controller="InventoryController" data-ng-init="all()">
+  <div class="container">
+    <div class="row gridheader">
+      <div class="col-md-6">
+        <h4>Reservations</h4>
+      </div>
+      <div class="col-md-6">
+        <h5 data-ng-hide="inventorySelections.length === 0">Inventory #{{inventorySelections[0].tagId}}</h5>
+      </div>
+    </div>
     <div class="row">
       <div class="col-md-6 selectedItems">
         <div class="smallGridStyle" data-ng-grid="smallGridOptions"></div>
-        <!--
-        <div ng-repeat="sel in orderSelections">
-          <strong>{{sel.order.orderNumber}}</strong>
-        </div>
-        -->
+<!--
         Search by: &nbsp; &nbsp; &nbsp;
         <input type="checkbox" data-ng-model="searchBy[0]"> Style
         <input type="checkbox" data-ng-model="searchBy[1]"> Color
         <input type="checkbox" data-ng-model="searchBy[2]"> Size
-      </div>
-      <div class="col-md-6"><h3>Actions</h3>
-      <button class="btn btn-default" data-ng-click="assignInventory()">Assign Inventory</button>
-      <button class="btn btn-default" data-ng-click="receiveInventory()">Receive Inventory</button>
-      <button class="btn btn-default" data-ng-click="changeInventoryStatus()">Change Inventory Status</button>
-      </div>
-    </div>
-  </div>
-
-
-  <div class="gridStyle" data-ng-grid="gridOptions"></div>
-
-  <hr>
-
-  <div class="alert alert-info">
-      Server Response: {{response | json}}
-  </div>
-<!--   <form ng-upload="uploadComplete(content)" ng-upload-loading="startUploading()" action="/orders/upload" role="form">
-    <div class="form-group">
-      <label for="orderFile">Order csv file</label>
-      <input type="file" name="file" id="orderFile">
-      <p class="help-block">Select the csv file that contains the orders.</p>
-    </div>
-    <button type="submit" class="btn btn-default" ng-disabled="$isUploading">Submit</button>
-  </form>
-  <div class="selectedItems">
-    <div ng-repeat="sel in orderSelections">
-      <hr>
-      <address>
-        <strong>{{sel.name}}</strong><br>
-        <a href="mailto:#">{{sel.email}}</a><br>
-        <abbr title="Phone">P:</abbr>{{sel.telephone}}<br>
-        {{sel.street}}<br>
-        {{sel.city}}, {{sel.state}} {{sel.zipcode}}
-      </address>
-      <hr>
-    </div>
-  </div>
-  <div class="gridStyle" ng-grid="gridOptions"></div>
-  <hr>
-  <div class="alert alert-info">
-      Server Response: {{response | json}}
-  </div>
  -->
- </div>
+      </div>
+      <div class="col-md-6">
+        <div data-ng-hide="inventorySelections.length === 0">
+          <div class="row">
+            <div class="col-md-12">
+              <!-- show notes here? -->
+<!--
+              <h5>{{orderItemInventory.status}}</h5>
+              <div
+                  class="xsmallGridStyle"
+                  data-ng-grid="resGridOptions"
+                  data-ng-hide="orderItemInventory.inventory === null">
+              </div>
+ -->
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="btn-group btn-group-justified">
+                <div class="btn-group">
+                  <button
+                      class="btn btn-default btn-sm"
+                      data-ng-click="receiveInventory()"
+                      data-ng-disabled="!isInventoryReceivable()">
+                    Receive
+                  </button>
+                </div>
+                <div class="btn-group">
+                  <button
+                      class="btn btn-default btn-sm"
+                      data-ng-click="manufactureOrderItem()"
+                      data-ng-disabled="hasAssignedInventory()">
+                    Send to Cleaners
+                  </button>
+                </div>
+<!--
+                <div class="btn-group">
+                  <button
+                      class="btn btn-default btn-sm"
+                      data-ng-click="shipOrderItem()"
+                      data-ng-disabled="!isShippable()">
+                    Ship Order Item
+                  </button>
+                </div>
+                <div class="btn-group">
+                  <button
+                      class="btn btn-default btn-sm"
+                      data-ng-click="releaseInventory()"
+                      data-ng-disabled="!isShippable()">
+                    Release
+                  </button>
+                </div>
+                <div class="btn-group">
+                  <button
+                      class="btn btn-default btn-sm"
+                      data-toggle="modal"
+                      data-target="#addOrderItemModal">
+                    Add Order Item
+                  </button>
+                </div>
+ -->
+              </div> <!-- btn-group-justified -->
+            </div> <!-- col -->
+          </div> <!-- row -->
+        </div> <!-- data-ng-hide no order selections -->
+      </div> <!-- col -->
+    </div> <!-- row -->
+
+
+    <!-- Actions for main grid -->
+    <div class="row gridheader">
+      <div class="col-md-4">
+        <div class="btn-group">
+          <button
+              class="btn btn-default btn-xs"
+              data-toggle="modal"
+              data-target="#uploadInventoryModal">
+            Upload Inventory
+          </button>
+        </div>
+        <div class="btn-group">
+          <button
+              class="btn btn-default btn-xs"
+              data-toggle="modal"
+              data-target="#receiveInventoryModal">
+            Receive Inventory
+          </button>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="pull-right">
+        <form class="form-inline" data-role="form">
+          <div class="form-group">
+            <label class="sr-only " for="inventoryForDate">Inventory For Date</label>
+            <input class="thin" type="datetime" data-ng-model="enteredInventoryForDate" id="inventoryForDate" placeholder="Inventory For Date">
+          </div>
+          <div class="form-group">
+            <label class="sr-only" for="limitTo">Limit</label>
+            <select data-ng-model="inventoryQuery.limitTo" data-ng-options="lto for lto in limitToOptions">
+              <option>10</option>
+            </select>
+          </div>
+        </form>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="pull-right">
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Previous page"
+              data-ng-click="previousPage()"
+              data-ng-disabled="!previousPagesForDate.length">
+            &lt;&lt;&lt;
+          </button>
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Next page"
+              data-ng-click="nextPage()"
+              data-ng-disabled="!orderData.length">
+            &gt;&gt;&gt;
+          </button>
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Refresh order items"
+              data-ng-click="all()">
+            Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="gridStyle" data-ng-grid="gridOptions"></div>
+      </div>
+    </div>
+
+
+  <!-- Upload inventory modal -->
+  <div class="modal fade" id="uploadInventoryItemsModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" data-aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Upload Inventory</h4>
+        </div>
+        <div class="modal-body">
+          <form data-ng-upload="uploadComplete(content)" data-ng-upload-loading="startUploading()" action="/inventory/upload" data-role="form">
+            <div class="form-group">
+              <label for="orderFile">Inventory csv file</label>
+              <input type="file" name="file" id="inventoryFile">
+              <p class="help-block">Select the csv file that contains the inventory.</p>
+            </div>
+            <button type="submit" class="btn btn-default" data-ng-model="button" data-ng-disabled="isUploading">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div><!-- /Upload inventory modal -->
+
+
+  <!--  Receive inventory modal -->
+  <div class="modal fade" id="uploadReceiveInventoryModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" data-aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Receive Inventory</h4>
+        </div>
+        <div class="modal-body">
+          <form data-ng-upload="uploadComplete(content)" data-ng-upload-loading="startUploading()" action="/orders/upload" data-role="form">
+            <div class="form-group">
+              <label for="orderFile">Receive csv file</label>
+              <input type="file" name="file" id="orderFile">
+              <p class="help-block">Select the csv file that contains the receive data.</p>
+            </div>
+            <button type="submit" class="btn btn-default" data-ng-model="button" data-ng-disabled="isUploading">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div><!-- /Receive inventory modal -->
+
+  <!-- Add Inventory modal -->
+<!--
+  <div class="modal fade" id="addOrderItemModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" data-aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Add Item to Order #{{orderSelections[0].order.orderNumber}}</h4>
+        </div>
+        <div class="modal-body">
+          <form class="form-horizontal" data-role="form" name="addOrderItemForm" novalidate>
+            <div class="form-group">
+              <label for="newOrderItemStyle" class="col-sm-2 control-label">Style</label>
+              <div class="col-sm-10">
+                <input
+                    type="text"
+                    class="form-control"
+                    id="newOrderItemStyle"
+                    placeholder="Style"
+                    data-ng-model="newOrderItem.style"
+                    name="newOrderItemStyle"
+                    required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="newOrderItemColor" class="col-sm-2 control-label">Color</label>
+              <div class="col-sm-10">
+                <input
+                    type="text"
+                    class="form-control"
+                    id="newOrderItemColor"
+                    placeholder="Color"
+                    data-ng-model="newOrderItem.color"
+                    name="newOrderItemColor"
+                    required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="newOrderItemSize" class="col-sm-2 control-label">Size</label>
+              <div class="col-sm-10">
+                <input
+                    type="text"
+                    class="form-control"
+                    id="newOrderItemSize"
+                    placeholder="Size"
+                    data-ng-model="newOrderItem.size"
+                    name="newOrderItemSize"
+                    required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="newOrderItemNote" class="col-sm-2 control-label">Note</label>
+              <div class="col-sm-10">
+                <textarea
+                    class="form-control"
+                    rows="3"
+                    id="newOrderItemNote"
+                    data-ng-model="newOrderItem.note"
+                    name="newOrderItemNote">
+                </textarea>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <div class="checkbox">
+                  <label>
+                    <input
+                        type="checkbox"
+                        id="newOrderItemBackup"
+                        name="newOrderItemBackup"
+                        data-ng-model="newOrderItem.backup"> Backup?
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" data-ng-click="addOrderItem(newOrderItem)">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ --></div>

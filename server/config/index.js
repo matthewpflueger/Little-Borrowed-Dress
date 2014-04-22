@@ -51,7 +51,7 @@ module.exports = function $module(os, path, nconf) {
         'timestamp': false
       },
 
-      'db': 'mongodb://root:l87Zq0IzYCMt@localhost/lbd',
+      'db': 'mongodb://root:l87Zq0IzYCMt@admin.littleborroweddress.com/lbd?authSource=admin',
       'amqp': 'amqp://root:FfWTA5ApprJ9@localhost',
       'exchange': 'lbd',
       'port': 8000,

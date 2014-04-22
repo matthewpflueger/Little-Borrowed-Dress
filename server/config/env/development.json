@@ -1,5 +1,6 @@
 {
   "appName": "Development - Little Borrowed Dress",
+  "db-prod": "mongodb://root:l87Zq0IzYCMt@admin.littleborroweddress.com/lbd?authSource=admin",
   "db": "mongodb://localhost/lbd-dev",
   "amqp": "amqp://localhost",
   "logentries": {

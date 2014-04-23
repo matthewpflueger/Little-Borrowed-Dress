@@ -39,7 +39,7 @@ module.exports = function $module(os, path, nconf) {
         'filename': path.join(rootPath, 'logs', 'lbd.log'),
         'colorize': false,
         'timestamp': true,
-        'json': true,
+        'json': false,
         'level': 'debug',
         'maxsize': 5242880,
         'maxFiles': 10
@@ -47,7 +47,7 @@ module.exports = function $module(os, path, nconf) {
       'logentries': {
         'enable': true,
         'token': '805cc5af-8388-4634-8781-60adbdf696c7',
-        'level': 'debug',
+        'level': 'warn',
         'timestamp': false
       },
 

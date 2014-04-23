@@ -17,12 +17,13 @@ module.exports = function $module(mongoose, moment, _, utils, Address, OrderItem
   var OrderSchema = new mongoose.Schema({
     orderNumber: {
       type: Number,
-      required: true,
-      unique: true
+      default: 0,
+      // required: true,
+      // unique: true
     },
     purchasedOn: {
       type: Date,
-      required: true
+      // required: true
     },
 
     creditCardType: String,

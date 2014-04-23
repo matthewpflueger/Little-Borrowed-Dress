@@ -13,7 +13,8 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
 
   var reservationSpanDefaults = {
     'wedding': '3 weeks',
-    'fitting': '2 weeks'
+    'fitting': '2 weeks',
+    'purchase': '1 day'
   };
 
   var ReservationSchema = new mongoose.Schema({
@@ -34,12 +35,11 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
       default: '3 weeks'
     },
 
-    notes: String,
-
     orderNumber: String,
     email: String,
     name: String,
     telephone: Number,
+    backup: Boolean,
 
     order: mongoose.Schema.Types.ObjectId,
     orderitem: mongoose.Schema.Types.ObjectId,
@@ -94,6 +94,7 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
     this.email = customer.email;
     this.name = customer.name;
     this.telephone = customer.telephone;
+    this.backup = orderitem.backup;
     this.order = order._id;
     this.orderitem = orderitem._id;
     this.customer = customer._id;

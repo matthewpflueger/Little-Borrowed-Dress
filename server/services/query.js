@@ -29,6 +29,12 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
   }
   util.inherits(NotFoundError, Error);
 
+  function findInventoryByTagId(tagId) {
+    return check(
+        nodefn.lift(Inventory.findOne.bind(Inventory))({ tagId: tagId }),
+        'Inventory not found with tag id ' + tagId);
+  }
+
   function findInventoryById(id) {
     return check(
         nodefn.lift(Inventory.findOne.bind(Inventory))({ _id: id }),
@@ -91,6 +97,36 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
     query = query.sort('-orders.forDate').limit(limitBy.limitTo || 25);
 
     return check(nodefn.lift(query.exec.bind(query))(), 'No customer orders found');
+  }
+
+  function findInventoryReservationsForDate(limitBy) {
+    limitBy = limitBy || {};
+    log.debug('Limiting by limitBy=%j', limitBy, {});
+
+    var query = Inventory.find();
+
+    if (limitBy.style) {
+      query = query.where('itemDescription.style', new RegExp(limitBy.style, 'i'));
+    }
+    if (limitBy.color) {
+      query = query.where('itemDescription.color', new RegExp(limitBy.color, 'i'));
+    }
+    if (limitBy.size && limitBy.size.length > 0) {
+      log.debug('Limiting by size=%j', limitBy.size, {});
+      query = query.where('itemDescription.size').all(limitBy.size);
+    }
+
+    if (limitBy.inventoryForDate) {
+      query = query.where('reservations.date');
+      if (limitBy.inclusive === 'true' || limitBy.inclusive === true) {
+        query = query.lte(limitBy.inventoryForDate);
+      } else {
+        query = query.lt(limitBy.inventoryForDate);
+      }
+    }
+    query = query.sort('-reservations.date -createdOn').limit(limitBy.limitTo || 25);
+
+    return check(nodefn.lift(query.exec.bind(query))(), 'No inventory found');
   }
 
   function findInventoryForOrderItemForDate(orderitem, forDate, limitBy) {
@@ -168,9 +204,11 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
     findCustomerOrdersByDate: findCustomerOrdersByDate,
     findReservationByOrderItem: findReservationByOrderItem,
     findInventoryById: findInventoryById,
+    findInventoryByTagId: findInventoryByTagId,
     findCustomerById: findCustomerById,
     findOrderById: findOrderById,
     findOrderItemById: findOrderItemById,
+    findInventoryReservationsForDate: findInventoryReservationsForDate,
     findInventoryForOrderItemForDate: findInventoryForOrderItemForDate
   };
   return $module.exports;

@@ -15,6 +15,17 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
   utils = utils || require('../utils')();
 
 
+  function updateInventory(msg) {
+    log.info('About to update inventory msg=%j', msg, msg.content.user);
+
+    return query.findInventoryById(msg.content.inventory).then(function(i) {
+      i.update(msg.content.data, msg.content.user);
+      return nodefn.call(i.save.bind(i)).then(function(results) {
+        return new cmds.InventoryUpdated(results[0], msg.content.user);
+      });
+    });
+  }
+
   function shipInventory(msg) {
     log.info('About to ship inventory msg=%j', msg, msg.content.user);
 
@@ -167,40 +178,30 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
 
   function importInventory(msg) {
     var corrId = msg.properties.correlationId;
-    log.info('Importing inventory from message=%s', corrId);
-
+    var user = msg.content.user;
     var rec = msg.content.data;
+
+    log.info('Importing inventory from message=%s', corrId, user);
+
     var tagId = Inventory.makeTagId(rec['Tag ID']);
     rec['Tag ID'] = tagId;
 
-    Inventory.findOne({ tagId: tagId }, function(err, inventory) {
-      if (err) {
-        log.error('Error finding inventory=%s, error=%s, message=%s', tagId, err, corrId);
-        router.reply(msg, utils.errors.makeError(err));
-        return;
-      }
+    return query.findInventoryByTagId(rec['Tag ID']).then(function(i) {
+          return new cmds.InventoryImported(304, 'Inventory already exists', i, user);
+        }).catch(query.NotFoundError, function() {
+          var i = new Inventory();
+          i.import(rec);
 
-      if (!inventory) {
-        inventory = new Inventory();
-        inventory.import(rec);
-        inventory.save(function(err, i) {
-          if (err) {
-            log.error('Error saving inventory=%s, error=%s, message=%s', inventory.tagId, err, corrId);
-            router.reply(msg, utils.errors.makeError(err));
-          } else {
-            log.info('Imported inventory=%s, message=%s', inventory.tagId, corrId);
-            var res = new cmds.InventoryImported(201, 'Inventory created', i);
-            router.reply(msg, res);
-            router.tell(res);
-          }
+          return nodefn.lift(i.save.bind(i))().then(function(results) {
+            var i = results[0];
+            log.info('Imported inventory=%, message=%s', i.tagId, corrId, user);
+            log.debug('Imported inventory=%j', i, corrId, user);
+            return new cmds.InventoryImported(201, 'Inventory created', i, user);
+          });
         });
-      } else {
-        log.info('Already exists inventory=%s, message=%s', inventory.tagId, corrId);
-        router.reply(msg, new cmds.InventoryImported(304, 'Inventory already exists', inventory));
-      }
-    });
   }
 
+  router.receive(cmds.UpdateInventory.routingKey, updateInventory);
   router.receive(cmds.ShipInventory.routingKey, shipInventory);
   router.receive(cmds.RequestManufactureInventory.routingKey, requestManufactureInventory);
   router.receive(cmds.ReserveInventory.routingKey, reserveInventory);

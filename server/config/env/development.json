@@ -11,5 +11,11 @@
   },
   "console": {
     "enable": true
+  },
+  "browserify": {
+    "cache": false,
+    "minify": false,
+    "gzip": false,
+    "debug": true
   }
 }

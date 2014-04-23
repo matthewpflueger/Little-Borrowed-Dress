@@ -17,19 +17,23 @@ module.exports = function $module(_, mongoose, utils, helpers) {
 
     street: {
       type: String,
-      required: true
+      default: '',
+      // required: true,
     },
     city: {
       type: String,
-      required: true
+      default: '',
+      // required: true,
     },
     state: {
       type: String,
-      required: true
+      default: '',
+      // required: true,
     },
     zipcode: {
       type: Number,
-      required: true
+      default: 0,
+      // required: true,
     }
   }, helpers.schemaOptions());
 

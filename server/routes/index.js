@@ -9,6 +9,7 @@ module.exports = function $module(express) {
 
   var router = express.Router();
   router.use('/', require('./home')());
+  router.use('/errors', require('./errors')());
   router.use('/inventory', require('./inventory')());
   router.use('/orders', require('./orders')());
   router.use('/users', require('./users')());

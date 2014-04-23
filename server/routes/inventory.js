@@ -11,11 +11,14 @@ module.exports = function $module(inventoryController, requiresLogin, params, ex
   express = express || require('express');
 
   var router = express.Router();
+  router.get('/', requiresLogin, inventoryController.all);
   router.post('/upload', requiresLogin, inventoryController.upload);
   router.get('/orderitem/:orderitem', requiresLogin, inventoryController.inventoryForOrderItem);
-  router.post('/:orderitem', requiresLogin, inventoryController.manufactureOrderItem);
   router.post('/ship/:orderitem', requiresLogin, inventoryController.shipInventory);
+  router.put('/:inventory', requiresLogin, inventoryController.update);
+  router.post('/:orderitem', requiresLogin, inventoryController.manufactureOrderItem);
 
+  router.param('inventory', params.inventory);
   router.param('orderitem', params.orderitem);
 
   $module.exports = router;

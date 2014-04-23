@@ -19,7 +19,7 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
   utils = utils || require('../utils')();
 
 
-  $module.exports.all = function(req, res) {
+  function all(req, res) {
     query.findCustomerOrdersByDate(req.query).then(function(r) {
       res.json({
         response: 'Success',
@@ -30,14 +30,14 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
     }).catch(function(e) {
       res.json(500, utils.errors.makeError(e));
     });
-  };
+  }
 
-  $module.exports.order = function(req, res) {
+  function order(req, res) {
     var customer = req.customer;
-    var order = req.order;
-    log.info('Adding to order=%j, orderitem=%j, customer=%j', order, req.body, customer, req.user);
+    var o = req.order;
+    log.info('Adding to order=%j, orderitem=%j, customer=%j', o, req.body, customer, req.user);
 
-    var orderitem = order.addOrderItem(req.body);
+    var orderitem = o.addOrderItem(req.body);
     customer.addNote(req.body.note, req.user, 'OrderItem', orderitem);
     customer.save(function(err, customer) {
       if (err) {
@@ -55,9 +55,9 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
         orderitem: coi.orderitem.toJSON()
       });
     });
-  };
+  }
 
-  $module.exports.update = function(req, res) {
+  function update(req, res) {
     var customer = req.customer;
     log.info('Updating customer=%s, body=%j', customer.email, req.body, req.user);
     //FIXME currently we ignore versioning because multiple updates to the same record will fail
@@ -75,9 +75,9 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
       }
       res.json(customer.toJSON());
     });
-  };
+  }
 
-  $module.exports.upload = function (req, res) {
+  function upload(req, res) {
     res.setHeader('Content-Type', 'text/html');
 
     var busboy = new Busboy({ headers: req.headers });
@@ -145,7 +145,13 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
     });
 
     req.pipe(busboy);
-  };
+  }
 
+  $module.exports = {
+    all: all,
+    order: order,
+    update: update,
+    upload: upload
+  };
   return $module.exports;
 };

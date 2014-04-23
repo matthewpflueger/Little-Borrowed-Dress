@@ -37,8 +37,6 @@ module.exports = function(_, moment) {
       if (entity.orderitem.itemDescription[0].size.match) {
         entity.orderitem.itemDescription[0].size = entity.orderitem.itemDescription[0].size.match(/\d+/g);
       }
-      $log.info('Size=%O', entity.orderitem.itemDescription[0].size);
-      $log.info('Save entity=%O', $scope.changesToSave);
 
       $http
         .put('/orders/' + entity.customer._id, entity.customer)
@@ -79,6 +77,7 @@ module.exports = function(_, moment) {
     //check out http://stackoverflow.com/questions/15242592/angular-js-how-to-autocapitalize-an-input-field/15253892#15253892
     $scope.$watch('enteredOrdersForDate', function (dt) {
       if (!dt || !/^(\d){2}\/(\d){2}\/(\d){4}$/.test(dt)) {
+        $scope.ordersQuery.ordersForDate = null;
         return;
       }
 
@@ -131,17 +130,12 @@ module.exports = function(_, moment) {
           $scope.response = data.response;
 
           var rows = [];
-
           _.forEach(data.messages, function(c) {
             rows = rows.concat(makeOrderItemRows(c));
           });
 
           $scope.orderData = rows;
-          //FIXME seriously bad - passing a value via a third party object and then clearing it :(
-          $scope.ordersQuery.ordersForDate = null;
         }).error(function(data, status) {
-          //FIXME seriously bad - passing a value via a third party object and then clearing it :(
-          $scope.ordersQuery.ordersForDate = null;
           if (status === 404) {
             $log.info('No orders found');
             $scope.orderData = [];
@@ -245,6 +239,7 @@ module.exports = function(_, moment) {
       sortInfo: { fields: ['order.shipByDate'], directions: ['desc']},
       columnDefs: [
         {field:'order.orderNumber', displayName:'Order', enableCellEdit: false, width: 90},
+        {field:'order.type', displayName:'Order', enableCellEdit: false, width: 90},
         {field:'order.shipByDate', displayName:'Ship By Date', enableCellEdit: false, width: 110, cellFilter: 'date'},
         {field:'order.forDate', displayName:'For Date', enableCellEdit: true, width: 110, cellFilter: 'date'},
         {field:'order.bride', displayName:'Bride', enableCellEdit: true, width: 150},
@@ -459,7 +454,7 @@ module.exports = function(_, moment) {
     };
   }
 
-  OrderController.$inject = ['$scope', '$log', '$http', '$filter'];
+  OrderController.$inject = ['$scope', '$log', '$http'];
 
   return OrderController;
 };

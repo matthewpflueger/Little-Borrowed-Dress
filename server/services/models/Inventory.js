@@ -28,27 +28,25 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
     manufacturedOn: Date,
     productNumber: {
       type: Number,
-      min: 0,
+      // min: 0,
+      default: 0,
       required: true,
-      unique: true
+      // unique: true
     },
     status: {
       type: String,
       trim: true,
       lowercase: true,
+      default: '',
       required: true
     },
     tagId: {
       type: String,
       trim: true,
       lowercase: true,
-      required: true,
-      unique: true
-    },
-    notes: {
-      type: String,
       default: '',
-      trim: true
+      required: true,
+      // unique: true
     },
     location: {
       type: String,
@@ -60,15 +58,15 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
       type: [ItemDescription.schema],
       required: true
     },
+    notes: [Note.schema],
     reservations: [Reservation.schema],
-    // notes: [Note.schema]
   }, helpers.schemaOptions({ collection: 'inventory' }));
 
   InventorySchema.index({ style: 1, color: 1, size: 1});
 
 
   function makeTagId(tagId) {
-    if (!tagId || /.*n\/a.*/i.test(tagId) || /^\s*$/.test(tagId)) {
+    if (!tagId || !/^3035/.test(tagId)) {
       return uuid.v4();
     }
     return tagId;
@@ -124,7 +122,7 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
     i.manufacturedRequestedOn = new Date();
     i.itemDescription.push(orderitem.itemDescription[0]);
     i.productNumber = 99990000 + Math.floor(Math.random() * 10000);
-    i.status = 'for order';
+    i.status = 'ok';
     i.tagId = this.makeTagId();
     i.location = 'manufacturer';
 
@@ -212,8 +210,7 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
   };
 
   InventorySchema.methods.availabilityStatus = function(date, orderitem) {
-    //FIXME status needs to be something other than 'for order'
-    if (this.status !== 'for order') {
+    if (this.status !== 'ok') {
       log.info(
         'Not available for reservation inventory=%j, date=%s, orderitem=%j',
         this, date, orderitem, {});
@@ -228,15 +225,47 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
   };
 
   InventorySchema.methods.import = function(rec) {
-    this.manufacturedOn = new Date(rec['Prod Date']);
-    this.productNumber = rec['Prod #'];
-    this.status = rec.Status;
     this.tagId = makeTagId(rec.tagId || rec['Tag ID']);
-    this.notes = rec.Notes;
+    this.manufacturedOn = new Date(rec['Prod Date']);
+    this.productNumber = rec['Prod ']; //yes that is a space :(
+    if (!rec.Notes || /^\s*$/.test(rec.Notes) || /OK/ig.test(rec.Notes)) {
+      this.status = 'ok';
+    } else {
+      this.status = rec.Notes;
+    }
+
+    if (/Trunk/gi.test(rec.Status)) {
+      this.location = rec.Status;
+    } else if (/Purchase/gi.test(rec.Status)) {
+      this.location = 'purchase';
+    }
 
     var desc = this.itemDescription.create({});
     desc.import(rec);
     this.itemDescription.push(desc);
+  };
+
+  InventorySchema.methods.update = function(rec, user) {
+    //readonly fields
+    delete rec.createdOn;
+    delete rec.id;
+    delete rec._id;
+    delete rec.__v;
+    delete rec.createdOn;
+    delete rec.importedBy;
+    delete rec.location;
+    delete rec.receiveBackBy;
+    delete rec.notes;
+    delete rec.reservations;
+    delete rec.manufactureRequestedOn;
+    delete rec.manufactureSentOn;
+    delete rec.manufacturedOn;
+    delete rec.location;
+
+    _.assign(this, rec);
+    this.updatedOn = new Date();
+    this.updatedBy = user.id || user;
+    return this;
   };
 
   var Inventory = mongoose.model('Inventory', InventorySchema);

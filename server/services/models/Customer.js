@@ -23,14 +23,15 @@ module.exports = function $module(mongoose, uuid, _, utils, Order, Note, helpers
     },
     name: {
       type: String,
-      required: true,
-      match: /^\S{2,}/
+      default: '',
+      // required: true,
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
-      match: /^\S+@\S+\.\S{2,4}$/
+      default: '',
+      // required: true,
+      // unique: true,
+      // match: /^\S+@\S+\.\S{2,4}$/
     },
     telephone: Number,
     orders: {

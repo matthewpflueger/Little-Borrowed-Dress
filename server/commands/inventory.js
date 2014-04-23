@@ -7,6 +7,24 @@ module.exports = function $module(_) {
 
   _ = _ || require('lodash');
 
+  function UpdateInventory(inventory, data, user, options) {
+    _.assign(_.defaults(this, UpdateInventory), options);
+    this.inventory = inventory._id || inventory;
+    this.data = data;
+    this.user = user;
+  }
+  UpdateInventory.routingKey = 'commands.inventory.update';
+
+  function InventoryUpdated(inventory, user, options) {
+    _.assign(_.defaults(this, InventoryUpdated), options);
+    this.inventory = inventory.toJSON();
+    this.user = user;
+  }
+  InventoryUpdated.routingKey = 'events.inventory.updated';
+  InventoryUpdated.status = 200;
+  InventoryUpdated.message = 'Inventory updated';
+
+
   function ShipInventory(orderitem, user, options) {
     _.assign(_.defaults(this, ShipInventory), options);
     this.orderitem = orderitem._id || orderitem;
@@ -113,21 +131,27 @@ module.exports = function $module(_) {
   InventoryReleased.message = 'Inventory released';
 
 
-  function ImportInventory(data, options) {
+  function ImportInventory(data, user, options) {
     _.assign(_.defaults(this, ImportInventory), options);
     this.data = data;
+    this.user = user;
   }
   ImportInventory.routingKey = 'commands.inventory.import';
 
-  function InventoryImported(status, message, inventory, options) {
+  function InventoryImported(status, message, inventory, user, options) {
     _.assign(_.defaults(this, InventoryImported), options);
+    this.status = status;
+    this.message = message;
     this.inventory = inventory.toJSON();
+    this.user = user;
   }
   InventoryImported.routingKey = 'events.inventory.import';
   InventoryImported.status = 201;
   InventoryImported.message = 'Inventory imported';
 
   $module.exports = {
+    UpdateInventory: UpdateInventory,
+    InventoryUpdated: InventoryUpdated,
     ShipInventory: ShipInventory,
     InventoryShipped: InventoryShipped,
     RequestManufactureInventory: RequestManufactureInventory,

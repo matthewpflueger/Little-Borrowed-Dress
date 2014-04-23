@@ -17,6 +17,24 @@ module.exports = function $module(Busboy, csv, when, query, router, cmds, Custom
   _ = _ || require('lodash');
   Inventory = Inventory || require('../services/models/Inventory')();
 
+  function all(req, res) {
+    query.findInventoryReservationsForDate(req.query).then(function(r) {
+      res.json(r);
+    }).catch(query.NotFoundError, function(e) {
+      res.json(404, utils.errors.makeError(e, null, 404));
+    }).catch(function(e) {
+      res.json(500, utils.errors.makeError(e));
+    });
+  }
+
+  function update(req, res) {
+    router.ask(new cmds.UpdateInventory(req.inventory, req.body, req.user)).then(function(r) {
+      res.json(r.content.status, r.content);
+    }).catch(function(e) {
+      res.json(500, utils.errors.makeError(e, 'Inventory update failed'));
+    });
+  }
+
   function shipInventory(req, res) {
     router.ask(new cmds.ShipInventory(req.orderitem, req.user)).then(function(r) {
       res.json(r.content.status, r.content);
@@ -49,9 +67,9 @@ module.exports = function $module(Busboy, csv, when, query, router, cmds, Custom
   }
 
   function upload(req, res) {
+    log.info('About to upload inventory', req.user);
     res.setHeader('Content-Type', 'text/html');
 
-    var fileUploadMessage = '';
 
     var busboy = new Busboy({ headers: req.headers });
     var fn = null;
@@ -64,29 +82,27 @@ module.exports = function $module(Busboy, csv, when, query, router, cmds, Custom
       csv
         .fromStream(file, {headers : true})
         .on('record', function(data){
-          promises.push(router.ask(new cmds.ImportInventory(data)));
+          promises.push(router.ask(new cmds.ImportInventory(data, req.user), 60000));
         })
         .on('end', function() {
-          fileUploadMessage = fn + ' uploaded to the server at ' + new Date().toString();
-          log.info(fileUploadMessage);
+          log.info('Inventory uploaded to server file=%s', fn, req.user);
 
           when.settle(promises).then(function (results) {
+            log.info('Upload of inventory complete results.length=%s', results.length, req.user);
+            log.debug('Upload of inventory complete results=%j', results, req.user);
+
             results.forEach(function(r) {
               if (r.state === 'rejected') {
-                log.info('Add inventory rejected %s', r.reason, req.user);
-              } else {
-                log.info('Add inventory worked %j', r.value, req.user);
-                inventoryData.push(r.value.content.inventory);
+                log.warn('Import of inventory rejected reason=%j', r.reason, req.user);
+                return;
               }
+              inventoryData.push(r.value.content.inventory);
             });
 
-            var responseObj = {
-              fileUploadMessage: fileUploadMessage,
-              response: fileUploadMessage,
-              inventoryData: inventoryData
-            };
-
-            res.send(JSON.stringify(responseObj));
+            res.json(inventoryData);
+          }).catch(function(e) {
+            log.error('Failed processing upload responses error=%s', e.toString(), req.user);
+            res.json(500, utils.errors.makeError(e));
           });
         });
     });
@@ -95,6 +111,8 @@ module.exports = function $module(Busboy, csv, when, query, router, cmds, Custom
   }
 
   $module.exports = {
+    all: all,
+    update: update,
     shipInventory: shipInventory,
     inventoryForOrderItem: inventoryForOrderItem,
     manufactureOrderItem: manufactureOrderItem,

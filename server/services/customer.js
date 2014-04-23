@@ -15,46 +15,6 @@ module.exports = function $module(when, nodefn, query, router, Customer, cmds, u
   utils = utils || require('../utils')();
 
 
-  // function shipInventory(msg) {
-  //   log.info('About to ship inventory msg=%j', msg, msg.content.user);
-
-  //   return when.join(
-  //     query.findReservationByOrderItem(msg.content.orderitem),
-  //     query.findOrderItemById(msg.content.orderitem)
-  //   ).then(function(results) {
-  //     log.info('Results=%j', results, msg.content.user);
-  //     var i = results[0];
-  //     var coi = results[1];
-
-  //     coi.orderitem.ship(msg.content.user);
-  //     i.shipForReservation(coi.orderitem, msg.content.user);
-
-  //     log.info('About to save ship for inventory=%j, customer=%j', i, coi.customer, {});
-  //     return when.join(
-  //       nodefn.lift(i.save.bind(i))(),
-  //       nodefn.lift(coi.customer.save.bind(coi.customer))()
-  //     ).then(function(results) {
-  //       log.info('Results=%j', results, msg.content.user);
-  //       var i = results[0][0];
-  //       var r = results[1][0].findOrderItem(coi.orderitem);
-
-  //       return new cmds.InventoryShipped(
-  //         i.availabilityStatus(r.order.forDate, r.orderitem),
-  //         i,
-  //         r.customer,
-  //         r.order,
-  //         r.orderitem);
-  //     }).catch(function(e) {
-  //       coi.orderitem.shippedOn = undefined;
-  //       coi.orderitem.shippedBy = undefined;
-  //       i.revertShipForReservation(coi.orderitem);
-
-  //       coi.customer.save();
-  //       i.save();
-  //       throw e;
-  //     });
-  //   });
-  // }
 
   function importOrderItems(msg) {
     var user = msg.content.user;

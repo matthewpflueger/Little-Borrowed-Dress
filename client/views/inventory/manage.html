@@ -5,12 +5,12 @@
         <h4>Reservations</h4>
       </div>
       <div class="col-md-6">
-        <h5 data-ng-hide="inventorySelections.length === 0">Inventory #{{inventorySelections[0].tagId}}</h5>
+        <h5 data-ng-hide="inventorySelections.length === 0">Inventory #{{inventorySelections[0].inventory.tagId}}</h5>
       </div>
     </div>
     <div class="row">
       <div class="col-md-6 selectedItems">
-        <div class="smallGridStyle" data-ng-grid="smallGridOptions"></div>
+        <div class="smallGridStyle" data-ng-grid="resGridOptions"></div>
 <!--
         Search by: &nbsp; &nbsp; &nbsp;
         <input type="checkbox" data-ng-model="searchBy[0]"> Style
@@ -47,8 +47,8 @@
                 <div class="btn-group">
                   <button
                       class="btn btn-default btn-sm"
-                      data-ng-click="manufactureOrderItem()"
-                      data-ng-disabled="hasAssignedInventory()">
+                      data-ng-click="sendToCleaners()"
+                      data-ng-disabled="!isCleanable()">
                     Send to Cleaners
                   </button>
                 </div>
@@ -101,14 +101,27 @@
           <button
               class="btn btn-default btn-xs"
               data-toggle="modal"
-              data-target="#receiveInventoryModal">
+              data-target="#receiveInventoryModal"
+              data-ng-disabled="true">
             Receive Inventory
           </button>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-5">
         <div class="pull-right">
         <form class="form-inline" data-role="form">
+          <div class="form-group">
+            <label class="sr-only " for="inventoryForStyle">Style</label>
+            <input class="thin short" type="text" data-ng-model="enteredInventoryForStyle" id="inventoryForStyle" placeholder="Style">
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="inventoryForColor">Color</label>
+            <input class="thin short" type="text" data-ng-model="enteredInventoryForColor" id="inventoryForColor" placeholder="Color">
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="inventoryForSize">Size</label>
+            <input class="thin short" type="text" data-ng-model="enteredInventoryForSize" id="inventoryForSize" placeholder="Size">
+          </div>
           <div class="form-group">
             <label class="sr-only " for="inventoryForDate">Inventory For Date</label>
             <input class="thin" type="datetime" data-ng-model="enteredInventoryForDate" id="inventoryForDate" placeholder="Inventory For Date">
@@ -122,7 +135,7 @@
         </form>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="pull-right">
           <button
               type="button"
@@ -139,7 +152,7 @@
               data-toggle="tooltip"
               data-placement="left" title="Next page"
               data-ng-click="nextPage()"
-              data-ng-disabled="!orderData.length">
+              data-ng-disabled="!reservationDatesForPaging()">
             &gt;&gt;&gt;
           </button>
           <button
@@ -163,7 +176,7 @@
 
 
   <!-- Upload inventory modal -->
-  <div class="modal fade" id="uploadInventoryItemsModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
+  <div class="modal fade" id="uploadInventoryModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -194,7 +207,7 @@
           <h4 class="modal-title">Receive Inventory</h4>
         </div>
         <div class="modal-body">
-          <form data-ng-upload="uploadComplete(content)" data-ng-upload-loading="startUploading()" action="/orders/upload" data-role="form">
+          <form data-ng-upload="uploadComplete(content)" data-ng-upload-loading="startUploading()" action="/inventory/receive/upload" data-role="form">
             <div class="form-group">
               <label for="orderFile">Receive csv file</label>
               <input type="file" name="file" id="orderFile">

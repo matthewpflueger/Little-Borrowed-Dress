@@ -27,16 +27,19 @@ module.exports = function $module(mongoose, uuid, crypto, helpers) {
       type: String,
       trim: true,
       lowercase: true,
+      default: 'none',
       required: true
     },
     size: {
       type: [String],
+      default: ['99'],
       required: true
     },
     color: {
       type: String,
       trim: true,
       lowercase: true,
+      default: 'none',
       required: true
     }
   }, helpers.schemaOptions({ _id: false }));

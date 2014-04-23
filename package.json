@@ -1,6 +1,7 @@
 {
   "name": "Little-Borrowed-Dress",
   "version": "0.1.0",
+  "main": "server",
   "dependencies": {
     "express": "~4.0.0",
     "browserify-middleware": "~2.4.0",
@@ -50,15 +51,14 @@
     "jshint": "~2.4.4",
     "protractor": "~0.20.1",
     "napa": "~0.4.1",
-    "browserify": "~3.32.1",
-    "nodemon": "~1.0.16"
+    "browserify": "~3.32.1"
   },
   "engines": {
     "node": ">=0.10.0"
   },
   "scripts": {
     "install": "napa",
-    "dev": "nodemon --ignore client server",
+    "dev": "nodemon -w server",
     "start": "node server",
     "test": "istanbul test jasmine-node spec/",
     "cover": "istanbul cover jasmine-node spec/",

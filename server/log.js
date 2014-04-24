@@ -44,7 +44,7 @@ module.exports = function $module(fs, winston, logentries) {
   if (conf.get('logentries:enable')) {
     winston.info('Enabling logentries');
     logentries.logger({
-      token:'805cc5af-8388-4634-8781-60adbdf696c7',
+      token: conf.get('logentries:token'),
       handleExceptions: true
     }).winston(winston);
     winston.info('Application booting');

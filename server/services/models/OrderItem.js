@@ -20,7 +20,6 @@ module.exports = function $module(mongoose, crypto, ItemDescription, helpers, ut
     backup: {
       type: Boolean,
       default: false,
-      required: true
     },
     itemDescription: {
       type: [ItemDescription.schema],

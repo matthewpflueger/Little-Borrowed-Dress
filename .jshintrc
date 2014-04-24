@@ -21,6 +21,7 @@
   "globals": {
     "conf": false,
     "log": false,
+    "frequire": false,
     "requirejs": false,
     "angular": false,
     "describe": false,

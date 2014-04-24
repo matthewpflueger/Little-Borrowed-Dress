@@ -12,9 +12,18 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
   helpers = helpers || require('./helpers')();
 
   var reservationSpanDefaults = {
-    'wedding': '3 weeks',
-    'fitting': '2 weeks',
-    'purchase': '1 day'
+    wedding: {
+      pre: '3 weeks',
+      post: '2 weeks'
+    },
+    fitting: {
+      pre: '2 weeks',
+      post: '2 weeks'
+    },
+    purchase: {
+      pre: '3 weeks',
+      post: '0 minutes'
+    }
   };
 
   var ReservationSchema = new mongoose.Schema({
@@ -23,16 +32,20 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
       required: true,
       default: 'wedding'
     },
-    date: {
+    forDate: {
       type: Date,
       required: true,
       default: Date.now()
     },
-
-    reservationSpan: {
-      type: String,
+    reservationStart: {
+      type: Date,
       required: true,
-      default: '3 weeks'
+      default: Date.now()
+    },
+    reservationEnd: {
+      type: Date,
+      required: true,
+      default: Date.now()
     },
 
     orderNumber: String,
@@ -56,28 +69,35 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
   }, helpers.schemaOptions());
 
   function makeSpan(span) {
-    try {
-      var a = span.split(/\s/);
-      a[0] = parseInt(a[0]);
-      return a;
-    } catch (e) {
-      log.error('Failed to parse reservation span=%s, error=%j', span, e, {});
-      return makeSpan(reservationSpanDefaults.wedding);
-    }
+    var a = span.split(/\s/);
+    a[0] = parseInt(a[0]);
+    return a;
   }
 
-  ReservationSchema.virtual('reservationStart').get(function() {
-    var m = moment(this.date);
-    return m.subtract.apply(m, makeSpan(this.reservationSpan)).toDate();
-  });
+  /**
+   * Return a reservation tuple (start, end) for the given built in reservation type
+   * like wedding, fitting, purchase.
+   * @param  {Date} forDate               the reservation date
+   * @param  {String} type                the built in reservation type
+   * @return {Array}                      a tuple of [{Date}, {Date}]
+   */
+  function makeReservationSpan(forDate, type) {
+    var date = new Date(forDate);
+    var mpre = moment(forDate);
+    var mpost = moment(forDate);
+    var span = reservationSpanDefaults[type];
 
-  ReservationSchema.virtual('reservationEnd').get(function() {
-    var m = moment(this.date);
-    return m.add.apply(m, makeSpan(this.reservationSpan)).toDate();
-  });
+    return [
+      mpre.subtract.apply(mpre, makeSpan(span.pre)).toDate(),
+      mpost.add.apply(mpost, makeSpan(span.post)).toDate()
+    ];
+  }
+
+  ReservationSchema.statics.makeReservationSpan = makeReservationSpan;
+  ReservationSchema.statics.makeSpan = makeSpan;
 
   ReservationSchema.virtual('receiveBackBy').get(function() {
-    var m = moment(this.date);
+    var m = moment(this.forDate);
     return m.add('1 weeks').toDate();
   });
 
@@ -87,9 +107,12 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
   };
 
   ReservationSchema.methods.make = function(customer, order, orderitem) {
+    var span = makeReservationSpan(order.forDate, { type: order.type });
+
     this.type = order.type;
-    this.date = order.forDate;
-    this.reservationSpan = reservationSpanDefaults[order.type];
+    this.forDate = order.forDate;
+    this.reservationStart = span[0];
+    this.reservationEnd = span[1];
     this.orderNumber = order.orderNumber;
     this.email = customer.email;
     this.name = customer.name;

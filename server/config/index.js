@@ -46,7 +46,8 @@ module.exports = function $module(os, path, nconf) {
       },
       'logentries': {
         'enable': true,
-        'token': '805cc5af-8388-4634-8781-60adbdf696c7',
+        'token': 'f306e799-20e6-414d-89f1-a02b28e0ae67',
+        // 'token': '805cc5af-8388-4634-8781-60adbdf696c7',
         'level': 'warn',
         'timestamp': false
       },

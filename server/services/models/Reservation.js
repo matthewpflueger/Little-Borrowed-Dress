@@ -83,8 +83,8 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
    */
   function makeReservationSpan(forDate, type) {
     var date = new Date(forDate);
-    var mpre = moment(forDate);
-    var mpost = moment(forDate);
+    var mpre = moment(date);
+    var mpost = moment(date);
     var span = reservationSpanDefaults[type];
 
     return [
@@ -106,8 +106,17 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
     this.shippedOn = new Date();
   };
 
+  ReservationSchema.methods.update = function(rec) {
+    if (rec.reservationStart) {
+      this.reservationStart = rec.reservationStart;
+    }
+    if (rec.reservationEnd) {
+      this.reservationEnd = rec.reservationEnd;
+    }
+  }
+
   ReservationSchema.methods.make = function(customer, order, orderitem) {
-    var span = makeReservationSpan(order.forDate, { type: order.type });
+    var span = makeReservationSpan(order.forDate, order.type);
 
     this.type = order.type;
     this.forDate = order.forDate;

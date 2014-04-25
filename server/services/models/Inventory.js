@@ -246,7 +246,17 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
   };
 
   InventorySchema.methods.update = function(rec, user) {
-    //readonly fields
+    _.each(rec.reservations, function(r) {
+      var res = _.find(this.reservations, function(tr) {
+        log.debug('tr=%j, r=%j', tr, r, {});
+        return tr._id.toString() === r._id.toString();
+      }, this);
+      if (res) {
+        res.update(r);
+      }
+    }, this);
+
+    //FIXME probably a much better way to do readonly fields
     delete rec.createdOn;
     delete rec.id;
     delete rec._id;

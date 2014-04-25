@@ -1,7 +1,7 @@
 'use strict';
 
-require('../server/config')();
-require('../server/log')();
+require('../../server/config')();
+require('../../server/log')();
 
 /**
  * Require and return the file the spec is testing based on the spec's filename.
@@ -16,7 +16,7 @@ require('../server/log')();
 function frequire(filename) {
   var s = filename.split(__dirname);
   s = s[1].split('.spec.js');
-  s = '..' + s[0];
+  s = '../..' + s[0];
   return require(s);
 }
 

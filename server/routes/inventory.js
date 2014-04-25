@@ -15,8 +15,8 @@ module.exports = function $module(inventoryController, requiresLogin, params, ex
   router.post('/upload', requiresLogin, inventoryController.upload);
   router.get('/orderitem/:orderitem', requiresLogin, inventoryController.inventoryForOrderItem);
   router.post('/ship/:orderitem', requiresLogin, inventoryController.shipInventory);
+  router.post('/manufacture/:orderitem', requiresLogin, inventoryController.manufactureOrderItem);
   router.put('/:inventory', requiresLogin, inventoryController.update);
-  router.post('/:orderitem', requiresLogin, inventoryController.manufactureOrderItem);
 
   router.param('inventory', params.inventory);
   router.param('orderitem', params.orderitem);

@@ -437,7 +437,7 @@ module.exports = function(_, moment) {
       }
 
       $http
-        .post('/inventory/' + sel.orderitem.id)
+        .post('/inventory/manufacture/' + sel.orderitem.id)
         .success(function(data, status) {
           $log.info(
             'Manufactured orderitem=%O, data=%O, status=%s',

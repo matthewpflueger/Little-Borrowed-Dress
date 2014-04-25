@@ -60,7 +60,7 @@
     "install": "napa",
     "dev": "nodemon -w server",
     "start": "node server",
-    "autotest": "jasmine-node spec --autotest --watch server",
+    "autotest": "jasmine-node test/spec --autotest --watch server",
     "test": "istanbul test jasmine-node spec/",
     "cover": "istanbul cover jasmine-node spec/",
     "check-coverage": "istanbul check-coverage --statement -2 --branch 100 --function -2 --lines -2",

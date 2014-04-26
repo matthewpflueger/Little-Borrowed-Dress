@@ -113,7 +113,7 @@ module.exports = function $module(mongoose, moment, twix, utils, helpers) {
     if (rec.reservationEnd) {
       this.reservationEnd = rec.reservationEnd;
     }
-  }
+  };
 
   ReservationSchema.methods.make = function(customer, order, orderitem) {
     var span = makeReservationSpan(order.forDate, order.type);

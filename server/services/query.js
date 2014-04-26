@@ -117,7 +117,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
     }
 
     if (limitBy.inventoryForDate) {
-      query = query.where('reservations.date');
+      query = query.where('reservations.forDate');
       if (limitBy.inclusive === 'true' || limitBy.inclusive === true) {
         query = query.lte(limitBy.inventoryForDate);
       } else {

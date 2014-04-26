@@ -248,7 +248,6 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
   InventorySchema.methods.update = function(rec, user) {
     _.each(rec.reservations, function(r) {
       var res = _.find(this.reservations, function(tr) {
-        log.debug('tr=%j, r=%j', tr, r, {});
         return tr._id.toString() === r._id.toString();
       }, this);
       if (res) {

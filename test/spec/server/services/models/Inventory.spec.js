@@ -23,5 +23,7 @@ describe('Inventory', function() {
     expect(i.tagId).toBe('test');
     expect(i.reservations[1].reservationStart).toBe(resDate);
     expect(i.reservations[1].reservationStart).toNotBe(today);
+    expect(i.reservations[0].reservationStart).toBe(today);
+    expect(i.reservations[0].reservationEnd).toBe(today);
   });
 });

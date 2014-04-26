@@ -57,7 +57,7 @@ module.exports = function(_, moment) {
         .put('/inventory/' + entity.inventory._id, entity.inventory)
         .success(function(data, status) {
           $log.info('Saved inventory=%s, status=%s, data=%O', entity.inventory.tagId, status, data);
-          var e = findEntity(data, entity.reservation.id);
+          var e = findEntity(data.inventory, entity.reservation.id);
           if (e) {
             $log.info('Found entity=%O', e);
             row.entity = e;
@@ -240,7 +240,7 @@ module.exports = function(_, moment) {
         {field:'reservation.type', displayName:'Type', width: 80, enableCellEdit: false},
         {field:'reservation.reservationStart', displayName:'Start', width: 100, enableCellEdit: true, cellFilter: 'date'},
         {field:'reservation.reservationEnd', displayName:'End', width: 100, enableCellEdit: true, cellFilter: 'date'},
-        {field:'reservation.date', displayName:'For Date', width: 100, enableCellEdit: false, cellFilter: 'date'},
+        {field:'reservation.forDate', displayName:'For Date', width: 100, enableCellEdit: false, cellFilter: 'date'},
         {field:'reservation.backup', displayName:'Backup', enableCellEdit: false, width: 70},
         {field:'reservation.orderNumber', displayName:'Order', enableCellEdit: false, width: 90},
         {field:'reservation.name', displayName: 'Name', enableCellEdit: false, width: 150},
@@ -271,8 +271,7 @@ module.exports = function(_, moment) {
         {field:'type', displayName:'Type', width: 80, enableCellEdit: false},
         {field:'reservationStart', displayName:'Start', width: 100, enableCellEdit: false, cellFilter: 'date'},
         {field:'reservationEnd', displayName:'End', width: 100, enableCellEdit: false, cellFilter: 'date'},
-        {field:'date', displayName:'For Date', width: 100, enableCellEdit: false, cellFilter: 'date'},
-        {field:'reservationSpan', displayName:'Span', enableCellEdit: false, width: 70},
+        {field:'forDate', displayName:'For Date', width: 100, enableCellEdit: false, cellFilter: 'date'},
         {field:'backup', displayName:'Backup', enableCellEdit: false, width: 70},
         {field:'orderNumber', displayName:'Order', enableCellEdit: false, width: 90},
         {field:'name', displayName: 'Name', enableCellEdit: false, width: 150},

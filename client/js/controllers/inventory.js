@@ -85,6 +85,7 @@ module.exports = function(_, moment) {
 
     $scope.inventoryQuery = {
       inclusive: false,
+      createdOn: null,
       inventoryForDate: null,
       style: null,
       color: null,
@@ -146,35 +147,30 @@ module.exports = function(_, moment) {
       $scope.all();
     });
 
-    $scope.reservationDatesForPaging = function() {
+    $scope.datesForPaging = function() {
       var inv = $scope.inventoryData;
-      if (!inv.length || !inv[0].reservation || !inv[0].reservation.date) {
-        return false;
-      }
-
-      var last = inv[inv.length - 1];
-      if (!last || !last.reservation || !last.reservation.date) {
+      if (!inv.length || !inv[0] || !inv[0].inventory) {
         return false;
       }
 
       return {
-        startDate: inv[0].reservation.date,
-        endDate: last.reservation.date
+        startDate: inv[0].inventory.createdOn,
+        endDate: inv[inv.length - 1].inventory.createdOn
       };
     };
 
     $scope.nextPage = function() {
-      var dates = $scope.reservationDatesForPaging();
+      var dates = $scope.datesForPaging();
       if (!dates) {
-        $log.warn('No reservations to go to next page of');
+        $log.warn('No inventory to go to next page of');
         return;
       }
 
-      var oq = $scope.inventoryQuery;
+      var iq = $scope.inventoryQuery;
 
       $scope.previousPagesForDate.push(dates.startDate);
-      oq.inventoryForDate = dates.endDate;
-      oq.inclusive = false;
+      iq.createdOn = dates.endDate;
+      iq.inclusive = false;
       $scope.all();
     };
 
@@ -184,9 +180,9 @@ module.exports = function(_, moment) {
         return;
       }
 
-      var oq = $scope.inventoryQuery;
-      oq.inventoryForDate = $scope.previousPagesForDate.pop();
-      oq.inclusive = true;
+      var iq = $scope.inventoryQuery;
+      iq.createdOn = $scope.previousPagesForDate.pop();
+      iq.inclusive = true;
       $scope.all();
     };
 

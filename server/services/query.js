@@ -124,6 +124,16 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
         query = query.lt(limitBy.inventoryForDate);
       }
     }
+
+    if (limitBy.createdOn) {
+      query = query.where('createdOn');
+      if (limitBy.inclusive === 'true' || limitBy.inclusive === true) {
+        query = query.lte(limitBy.createdOn);
+      } else {
+        query = query.lt(limitBy.createdOn);
+      }
+    }
+
     query = query.sort('-reservations.date -createdOn').limit(limitBy.limitTo || 25);
 
     return check(nodefn.lift(query.exec.bind(query))(), 'No inventory found');

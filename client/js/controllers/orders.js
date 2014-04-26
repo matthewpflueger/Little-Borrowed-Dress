@@ -75,8 +75,8 @@ module.exports = function(_, moment) {
 
     //FIXME could use a directive here to keep ordersQuery.ordersForDate and input field in sync
     //check out http://stackoverflow.com/questions/15242592/angular-js-how-to-autocapitalize-an-input-field/15253892#15253892
-    $scope.$watch('enteredOrdersForDate', function (dt) {
-      if (!dt || !/^(\d){2}\/(\d){2}\/(\d){4}$/.test(dt)) {
+    $scope.$watch('enteredOrdersForDate', _.debounce(function (dt) {
+      if (!dt || !/^(\d){1,2}\/(\d){1,2}\/(\d){2,4}$/.test(dt)) {
         $scope.ordersQuery.ordersForDate = null;
         return;
       }
@@ -85,7 +85,7 @@ module.exports = function(_, moment) {
       $scope.previousPagesForDate = [];
       $scope.ordersQuery.ordersForDate = new Date(dt).toISOString();
       $scope.all();
-    });
+    }, 500));
 
     $scope.$watch('ordersQuery.limitTo', function() {
       $scope.all();

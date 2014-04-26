@@ -130,8 +130,8 @@ module.exports = function(_, moment) {
       // if (entity.inventory.itemDescription[0].size.match) {
       //   entity.inventory.itemDescription[0].size = entity.inventory.itemDescription[0].size.match(/\d+/g);
       // }
-    $scope.$watch('enteredInventoryForDate', function (dt) {
-      if (!dt || !/^(\d){2}\/(\d){2}\/(\d){4}$/.test(dt)) {
+    $scope.$watch('enteredInventoryForDate', _.debounce(function (dt) {
+      if (!dt || !/^(\d){1,2}\/(\d){1,2}\/(\d){2,4}$/.test(dt)) {
         $scope.inventoryQuery.inventoryForDate = null;
         return;
       }
@@ -140,7 +140,7 @@ module.exports = function(_, moment) {
       $scope.previousPagesForDate = [];
       $scope.inventoryQuery.inventoryForDate = new Date(dt).toISOString();
       $scope.all();
-    });
+    }, 500));
 
     $scope.$watch('inventoryQuery.limitTo', function() {
       $scope.all();

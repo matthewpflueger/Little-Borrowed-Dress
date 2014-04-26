@@ -104,6 +104,19 @@ module.exports = function $module(mongoose, moment, _, utils, Address, OrderItem
 
     this.orderNumber = utils.number.makeNumber(rec['Order #']);
     this.forDate = new Date(rec['Wedding Date']);
+    log.debug(
+      'Order forDate=%s, rec[\'Wedding Date\']=%s',
+      this.forDate, rec['Wedding Date']);
+
+    //normalize the year as the import data typically represents years as two digits which Javascript
+    //takes to mean between 1900 - 1999 :(
+    if (this.forDate.getFullYear() < 2000) {
+      this.forDate.setFullYear(this.forDate.getFullYear() - 1900 + 2000);
+      log.warn(
+        'Normalized order forDate=%s, rec[\'Wedding Date\']=%s',
+        this.forDate, rec['Wedding Date']);
+    }
+
 
     var fd = moment(this.forDate);
     if (fd.year() > 2029) {
@@ -124,7 +137,9 @@ module.exports = function $module(mongoose, moment, _, utils, Address, OrderItem
     }
     this.purchasedOn = new Date(rec['Purchased On']);
 
-    this.creditCardType = rec['PAYMENT INFORMATION'].match(/Credit Card Type:(.+)/)[1];
+    if (rec['PAYMENT INFORMATION']) {
+      this.creditCardType = rec['PAYMENT INFORMATION'].match(/Credit Card Type:(.+)/)[1];
+    }
     this.creditCardLast = utils.number.makeNumber(rec['Credit Card Last 4 Digit']);
 
     this.processedAmount = utils.number.makeDollar(rec['Processed Amount']);
@@ -193,26 +208,6 @@ module.exports = function $module(mongoose, moment, _, utils, Address, OrderItem
     }
 
     return importedOrderItems;
-
-
-    // for (var i = 0; i < qty; i++) {
-    //   var orderitem = this.orderitems.create({});
-    //   orderitem.import(rec['PRODUCT DETAILS'], rec.Size, rec.Color, false, user);
-    //   this.orderitems.push(orderitem);
-    // }
-
-    // if (/^Size:/i.test(rec['Free 2nd Size'])) {
-    //   for (var i = 0; i < qty; i++) {
-    //   }
-
-    // }
-    // return this;
-
-
-    // var orderitem = this.orderitems.create({});
-    // orderitem.import(rec);
-    // this.orderitems.push(orderitem);
-    // return orderitem;
   };
 
   var Order = mongoose.model('Order', OrderSchema);

@@ -37,13 +37,13 @@ describe('Reservation', function() {
     verifySpan(span[0], span[1]);
   });
 
-  it('should make a new reservation given a customer, order, and orderitem'), function() {
+  it('should make a new reservation given a customer, order, and orderitem', function() {
     var today = new Date();
     var r = new Reservation();
     r.make({}, { type: 'wedding', forDate: today }, {});
     verifySpan(r.reservationStart, r.reservationEnd);
     expect(r.type).toBe('wedding');
-  }
+  });
 
   it('should update a reservation', function() {
     var today = new Date();
@@ -60,7 +60,7 @@ describe('Reservation', function() {
     expect(res.reservationEnd).toEqual(today);
     expect(res.orderNumber).toBe('orderNumber');
 
-  })
+  });
 
 });
 

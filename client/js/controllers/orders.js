@@ -238,6 +238,7 @@ module.exports = function(_, moment) {
       enableColumnReordering: true,
       sortInfo: { fields: ['order.shipByDate'], directions: ['desc']},
       columnDefs: [
+        {field:'order.purchasedOn', displayName:'Purchased On', enableCellEdit: false, width: 110, cellFilter: 'date'},
         {field:'order.orderNumber', displayName:'Order', enableCellEdit: false, width: 90},
         {field:'order.type', displayName:'Order', enableCellEdit: false, width: 90},
         {field:'order.shipByDate', displayName:'Ship By Date', enableCellEdit: false, width: 110, cellFilter: 'date'},

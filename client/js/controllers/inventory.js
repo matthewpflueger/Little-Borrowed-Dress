@@ -228,6 +228,7 @@ module.exports = function(_, moment) {
       columnDefs: [
         {field:'inventory.tagId', displayName:'Tag Id', enableCellEdit: true, width: 100},
         {field:'inventory.productNumber', displayName:'Prod #', enableCellEdit: true, width: 80},
+        {field:'inventory.manufacturedOn', displayName:'Manufactured On', enableCellEdit: false, width: 110, cellFilter: 'date'},
         {field:'inventory.itemDescription[0].style', displayName:'Style', enableCellEdit: true, width: 70},
         {field:'inventory.itemDescription[0].color', displayName:'Color', enableCellEdit: true, width: 70},
         {field:'inventory.itemDescription[0].size', displayName:'Size', enableCellEdit: true, width: 70, cellFilter: 'join:" | "'},

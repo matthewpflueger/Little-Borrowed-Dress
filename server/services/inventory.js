@@ -71,8 +71,17 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
   function requestManufactureInventory(msg) {
     log.info('About to request manufacture inventory msg=%j', msg, msg.content.user);
 
-    return query.findOrderItemById(msg.content.orderitem).then(function(coi) {
-      var i = Inventory.manufactureForOrderItem(coi.customer, coi.order, coi.orderitem);
+    return when.join(
+      query.nextSeq('productNumber'),
+      query.findOrderItemById(msg.content.orderitem)
+    ).then(function(results) {
+      log.debug(
+        'Requesting manufacture of orderitem=%j, productNumber=%s, results=%j',
+        msg.content.orderitem, results[0], results);
+      var productNumber = results[0];
+      var coi = results[1];
+
+      var i = Inventory.manufactureForOrderItem(coi.customer, coi.order, coi.orderitem, productNumber);
       if (!coi.orderitem.assign(i)) {
         return { status: 412, message: 'Order item not assignable' };
       }

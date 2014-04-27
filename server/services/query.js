@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
+module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Sequence) {
   if ($module.exports) {
     return $module.exports;
   }
@@ -12,6 +12,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
 
   Customer = Customer || require('./models/Customer')();
   Inventory = Inventory || require('./models/Inventory')();
+  Sequence = Sequence || require('./models/Sequence')();
 
 
   function check(promise, message) {
@@ -28,6 +29,13 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
     this.message = message;
   }
   util.inherits(NotFoundError, Error);
+
+  function nextSeq(name) {
+    return check(
+        nodefn.lift(Sequence.findOneAndUpdate.bind(Sequence))(
+          { name: name }, { $inc: { seq: 1 }}),
+        'Sequence not found with name ' + name).then(function(r) { return r.seq; });
+  }
 
   function findInventoryByTagId(tagId) {
     return check(
@@ -209,6 +217,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory) {
 
   $module.exports = {
     NotFoundError: NotFoundError,
+    nextSeq: nextSeq,
     findCustomerByPhone: findCustomerByPhone,
     findCustomerByEmail: findCustomerByEmail,
     findCustomerOrdersByDate: findCustomerOrdersByDate,

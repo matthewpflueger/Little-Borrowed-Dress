@@ -117,11 +117,11 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
   };
 
 
-  InventorySchema.statics.manufactureForOrderItem = function(customer, order, orderitem) {
+  InventorySchema.statics.manufactureForOrderItem = function(customer, order, orderitem, productNumber) {
     var i = new Inventory();
     i.manufacturedRequestedOn = new Date();
     i.itemDescription.push(orderitem.itemDescription[0]);
-    i.productNumber = 99990000 + Math.floor(Math.random() * 10000);
+    i.productNumber = productNumber;
     i.status = 'ok';
     i.tagId = this.makeTagId();
     i.location = 'manufacturer';

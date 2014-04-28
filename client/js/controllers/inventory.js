@@ -195,6 +195,7 @@ module.exports = function(_, moment) {
       var iq = $scope.inventoryQuery;
       var config = { params: iq };
 
+      $scope.info.message = null;
       $http
         .get('/inventory', config)
         .success(function(data, status) {

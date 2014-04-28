@@ -218,6 +218,7 @@ module.exports = function(_, moment) {
       var oq = $scope.ordersQuery;
       var config = { params: oq };
 
+      $scope.info.message = null;
       $http
         .get('/orders', config)
         .success(function(data, status) {

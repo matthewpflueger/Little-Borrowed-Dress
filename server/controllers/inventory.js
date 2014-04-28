@@ -1,11 +1,13 @@
 'use strict';
 
-module.exports = function $module(Busboy, csv, when, query, router, cmds, Customer, utils, _, Inventory) {
+module.exports = function $module(fs, moment, Busboy, csv, when, query, router, cmds, Customer, utils, _, Inventory) {
   if ($module.exports) {
     return $module.exports;
   }
   $module.exports = {};
 
+  fs = fs || require('fs');
+  moment = moment || require('moment');
   Busboy = Busboy || require('busboy');
   csv = csv || require('fast-csv');
   when = when || require('when');
@@ -75,13 +77,19 @@ module.exports = function $module(Busboy, csv, when, query, router, cmds, Custom
     var fn = null;
     var inventoryData = [];
     var promises = [];
+    var records = [];
+    var errors = [];
 
 
     busboy.on('file', function(fieldname, file, filename) { //, encoding, mimetype) {
       fn = filename;
       csv
-        .fromStream(file, {headers : true})
+        .fromStream(file, {headers : true, ignoreEmpty: true, trim: true})
+        .on('parse-error', function(err) {
+          log.error('Error parsing during inventory import error=%j', err, req.user);
+        })
         .on('record', function(data){
+          records.push(data);
           promises.push(router.ask(new cmds.ImportInventory(data, req.user), 60000));
         })
         .on('end', function() {
@@ -91,15 +99,47 @@ module.exports = function $module(Busboy, csv, when, query, router, cmds, Custom
             log.info('Upload of inventory complete results.length=%s', results.length, req.user);
             log.debug('Upload of inventory complete results=%j', results, req.user);
 
-            results.forEach(function(r) {
+            _.each(results, function(r, i) {
               if (r.state === 'rejected') {
-                log.warn('Import of inventory rejected reason=%j', r.reason, req.user);
+                log.warn('Import of inventory rejected reason=%j, record=%j', r.reason, records[i], req.user);
+                var ec = r.reason.content || r.reason;
+                records[i].error = ec.error || ec.message || JSON.stringify(ec);
+                errors.push(records[i]);
                 return;
               }
+
               inventoryData.push(r.value.content.inventory);
             });
 
-            res.json(inventoryData);
+            //FIXME duplicated from controllers/orders :(
+            var error = {};
+            if (errors.length) {
+              var errorfn = 'errors_' + moment(new Date()).format('YYYYMMDDHHmmss') + fn;
+              var errorfnDownload = 'tmp/' + errorfn;
+              var errorfile = conf.get('clientPath') + '/' + errorfnDownload;
+              var csvErrorStream = csv.createWriteStream({headers: true});
+              var writableStream = fs.createWriteStream(errorfile);
+
+              log.error('Encountered during inventory upload errors=%j, errorfile=%s', errors, errorfile, req.user);
+
+              writableStream.on('finish', function(){
+                log.debug('Done writing error errorfile=%s', errorfile, req.user);
+              });
+
+              csvErrorStream.pipe(writableStream);
+              _.each(errors, function(e) { csvErrorStream.write(e); });
+              csvErrorStream.write(null);
+
+              error.message = '' + errors.length + ' records failed to import.';
+              error.href = errorfnDownload;
+              error.link = 'Click here to download the failed records.';
+            }
+
+            res.json({
+              error: error,
+              inventory: inventoryData
+            });
+            // res.json(inventoryData);
           }).catch(function(e) {
             log.error('Failed processing upload responses error=%s', e.toString(), req.user);
             res.json(500, utils.errors.makeError(e));

@@ -20,6 +20,7 @@ module.exports = function $module(os, path, nconf) {
   process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
   var rootPath = path.normalize(__dirname + '/../..');
+  var clientPath = path.join(rootPath, 'client');
 
   nconf
     .argv()
@@ -63,8 +64,9 @@ module.exports = function $module(os, path, nconf) {
       'templateEngine': 'swig',
       'secret': '#Sy@zZoMU!m65KPbMZaGZ6QoGV0i^MR8',
       'rootPath': rootPath,
+      'clientPath': clientPath,
+      'clientTmpPath': path.join(clientPath, 'tmp'),
       'viewsPath': path.join(rootPath, 'server', 'views'),
-      'clientPath': path.join(rootPath, 'client'),
       'bootstrapPath': path.join(rootPath, 'node_modules', 'bootstrap'),
       'ngGridPath': path.join(rootPath, 'node_modules', 'ng-grid'),
       'cssDirPath': path.join(rootPath, 'client', 'css'),

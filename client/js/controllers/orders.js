@@ -40,19 +40,17 @@ module.exports = function(_, moment) {
 
       $http
         .put('/orders/' + entity.customer._id, entity.customer)
-        .success(function(data, status, headers, config) {
-          $log.info(
-            'Saved customer=%s, status=%s, data=%O, headers=%O, config=%O',
-            entity.customer.email, status, data, headers, config);
+        .success(function(data, status) {
+          $scope.success.message = 'Saved order data.';
+          $log.info('Saved customer=%s, status=%s, data=%O', entity.customer.email, status, data);
           var e = findEntity(data, entity.orderitem.id);
           if (e) {
             $log.info('Found entity=%O', e);
             row.entity = e;
           }
-        }).error(function(data, status, headers, config) {
-          $log.error(
-            'Could not save customer=%s, status=%s, data=%O, headers=%O, config=%O',
-            entity.customer.email, status, data, headers, config);
+        }).error(function(data, status) {
+          $scope.error.message = 'Failed to save order data.';
+          $log.error('Could not save customer=%s, status=%s, data=%O', entity.customer.email, status, data);
           var e = findEntity(data, entity.orderitem.id);
           if (e) {
             $log.info('Found entity=%O', e);
@@ -171,14 +169,6 @@ module.exports = function(_, moment) {
     //check out http://stackoverflow.com/questions/15242592/angular-js-how-to-autocapitalize-an-input-field/15253892#15253892
     $scope.$watch('enteredOrdersForDate', debounce(function (dt) {
       setOrdersForDate(dt);
-      // if (!dt || !/^(\d){1,2}\/(\d){1,2}\/(\d){2,4}$/.test(dt)) {
-      //   $scope.ordersQuery.ordersForDate = null;
-      //   return;
-      // }
-
-      // $log.info('Saw update to enteredOrdersForDate %s', dt);
-      // $scope.previousPagesForDate = [];
-      // $scope.ordersQuery.ordersForDate = new Date(dt).toISOString();
       $scope.all();
     }));
 
@@ -244,11 +234,12 @@ module.exports = function(_, moment) {
           $scope.orderData = rows;
         }).error(function(data, status) {
           if (status === 404) {
-            $log.info('No orders found');
+            $scope.info.message = 'No orders found!';
             $scope.orderData = [];
             return;
           }
           $log.error('Failed to fetch orders data=%O, status=%s', data, status);
+          $scope.error.message = 'Failed to fetch orders.';
         });
     };
 
@@ -260,20 +251,17 @@ module.exports = function(_, moment) {
 
       $http
         .post('/reservations/' + orderitem + '/' + inventory)
-        .success(function(data, status, headers, config) {
-          $log.info(
-            'Reserved inventory=%O, status=%s, headers=%O, config=%O',
-            data, status, headers, config);
+        .success(function(data, status) {
+          $log.info('Reserved inventory=%O, status=%s', data, status);
           orderSel.customer = data.customer;
           orderSel.order = data.order;
           orderSel.orderitem = data.orderitem;
           inventorySel.inventory = data.inventory;
           inventorySel.availabilityStatus = data.availabilityStatus;
           queryInventory();
-        }).error(function(data, status, headers, config) {
-          $log.error(
-            'Failed to reserve inventory=%O, status=%s, headers=%O, config=%O',
-            data, status, headers, config);
+        }).error(function(data, status) {
+          $log.error('Failed to reserve inventory=%O, status=%s', data, status);
+          $scope.error.message = 'Failed to reserve inventory.';
         });
     };
 
@@ -292,19 +280,48 @@ module.exports = function(_, moment) {
 
       $http
         .delete('/reservations/' + orderitem.id + '/' + orderitem.inventory)
-        .success(function(data, status, headers, config) {
-          $log.info(
-            'Released inventory=%O, status=%s, headers=%O, config=%O',
-            data, status, headers, config);
+        .success(function(data, status) {
+          $log.info('Released inventory=%O, status=%s', data, status);
           sel.customer = data.customer;
           sel.order = data.order;
           sel.orderitem = data.orderitem;
           queryInventory();
-        }).error(function(data, status, headers, config) {
-          $log.error(
-            'Failed to release inventory=%O, status=%s, headers=%O, config=%O',
-            data, status, headers, config);
+        }).error(function(data, status) {
+          $log.error('Failed to release inventory=%O, status=%s', data, status);
+          $scope.error.message = 'Failed to release inventory.';
         });
+    };
+
+    $scope.success = {
+      message: null
+    };
+
+    $scope.clearSuccess = function() {
+      $scope.success.message = null;
+    };
+
+    $scope.info = {
+      message: null
+    };
+
+    $scope.clearInfo = function() {
+      $scope.info.message = null;
+    };
+
+    $scope.warning = {
+      message: null
+    };
+
+    $scope.clearWarning = function() {
+      $scope.warning.message = null;
+    };
+
+    $scope.error = {
+      message: null
+    };
+
+    $scope.clearError = function() {
+      $scope.error.message = null;
     };
 
     $scope.isUploading = false;
@@ -312,17 +329,18 @@ module.exports = function(_, moment) {
       $scope.isUploading = true;
     };
 
-    $scope.uploadComplete = function(customers) {
+    $scope.uploadComplete = function(results) {
       $log.info('Completed upload of order items');
       $scope.isUploading = false;
       global.jQuery('#uploadOrderItemsModal').modal('hide');
 
       var orders = [];
-      customers.forEach(function(c) {
+      results.customers.forEach(function(c) {
         orders = orders.concat(makeOrderItemRows(c));
       });
 
       $scope.orderData = orders;
+      $scope.error = results.error;
     };
 
     $scope.orderData = [];
@@ -429,10 +447,9 @@ module.exports = function(_, moment) {
             $scope.orderItemInventory.inventory = data.inventory;
             $scope.orderItemInventory.reservation = data.reservation;
           }
-        }).error(function(data, status, headers, config) {
-          $log.error(
-            'Failed to find inventory for orderitem=%O, status=%s, data=%O, headers=%O, config=%O',
-            orderitem, status, data, headers, config);
+        }).error(function(data, status) {
+          $scope.error.message = 'Failed to find inventory.';
+          $log.error('Failed to find inventory for orderitem=%O, status=%s, data=%O', orderitem, status, data);
         });
     }
 
@@ -499,10 +516,10 @@ module.exports = function(_, moment) {
 
           //FIXME ugly using jQuery here - ui-boostrap anyone?
           global.jQuery('#addOrderItemModal').modal('hide');
-        }).error(function(data, status, headers, config) {
-          $log.error(
-            'Failed to add orderitem=%O, status=%s, data=%O, headers=%O, config=%O',
-            $scope.newOrderItem, status, data, headers, config);
+        }).error(function(data, status) {
+          global.jQuery('#addOrderItemModal').modal('hide');
+          $scope.error.message = 'Failed to add order item.';
+          $log.error('Failed to add orderitem=%O, status=%s, data=%O', $scope.newOrderItem, status, data);
         });
     };
 
@@ -529,9 +546,8 @@ module.exports = function(_, moment) {
           sel.orderitem = data.orderitem;
           queryInventory();
         }).error(function(data, status) {
-          $log.error(
-            'Failed to ship orderitem=%O, status=%s, data=%O',
-            sel.orderitem, status, data);
+          $log.error('Failed to ship orderitem=%O, status=%s, data=%O', sel.orderitem, status, data);
+          $scope.error.message = 'Failed to ship order item.';
         });
     };
 
@@ -553,9 +569,8 @@ module.exports = function(_, moment) {
           sel.orderitem = data.orderitem;
           queryInventory();
         }).error(function(data, status) {
-          $log.error(
-            'Failed to manufacture orderitem=%O, status=%s, data=%O',
-            sel.orderitem, status, data);
+          $log.error('Failed to manufacture orderitem=%O, status=%s, data=%O', sel.orderitem, status, data);
+          $scope.error.message = 'Failed to manufacture order item.';
         });
     };
   }

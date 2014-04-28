@@ -1,5 +1,31 @@
 <div data-ng-controller="OrderController" data-ng-init="all()">
   <div class="container">
+    <div class="row">
+      <div class="col-md-12" data-ng-hide="error.message === null">
+        <div class="alert alert-danger alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearError()">&times;</button>
+          <strong>Error!</strong> {{error.message}} <a href="{{error.href}}" class="alert-link">{{error.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="warning.message === null">
+        <div class="alert alert-warning alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearWarning()">&times;</button>
+          <strong>Warning!</strong> {{warning.message}} <a href="{{warning.href}}" class="alert-link">{{warning.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="info.message === null">
+        <div class="alert alert-info alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearInfo()">&times;</button>
+          <strong>Info!</strong> {{info.message}} <a href="{{info.href}}" class="alert-link">{{info.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="success.message === null">
+        <div class="alert alert-success alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearSuccess()">&times;</button>
+          <strong>Success!</strong> {{success.message}} <a href="{{success.href}}" class="alert-link">{{success.link}}</a>
+        </div>
+      </div>
+    </div>
     <div class="row gridheader">
       <div class="col-md-6">
         <h4>Inventory</h4>

@@ -1,17 +1,17 @@
 'use strict';
 
-module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx, router, cmds, query) {
+module.exports = function $module(fs, moment, Customer, utils, Busboy, csv, when, _, router, cmds, query) {
   if ($module.exports) {
     return $module.exports;
   }
   $module.exports = {};
 
+  fs = fs || require('fs');
+  moment = moment || require('moment');
   Busboy = Busboy || require('busboy');
   csv = csv || require('fast-csv');
   when = when || require('when');
   _ = _ || require('lodash');
-  hl = hl || require('highland');
-  rx = rx || require('rx');
   router = router || require('../commands/router')();
   query = query || require('../services/query')();
   cmds = cmds || require('../commands/orderitem')();
@@ -84,11 +84,16 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
     var fn = null;
     var customersById = {};
     var promises = [];
+    var records = [];
+    var errors = [];
 
     busboy.on('file', function(fieldname, file, filename) {
       fn = filename;
       csv
-        .fromStream(file, {headers : true})
+        .fromStream(file, {headers : true, ignoreEmpty: true, trim: true})
+        .on('parse-error', function(err) {
+          log.error('Error parsing during order import error=%j', err, req.user);
+        })
         .on('record', function(data){
           //Seriously crappy data export causes issues when converting to JSON
           if (data.Size) {
@@ -98,6 +103,7 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
             data['Free 2nd Size'] = data['Free 2nd Size'].split('&quot;').join('');
           }
 
+          records.push(data);
           promises.push(router.ask(new cmds.ImportOrderItems(data, req.user), 60000));
         })
         .on('end', function() {
@@ -107,9 +113,12 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
             log.info('Upload of order items complete results.length=%s', results.length, req.user);
             log.debug('Upload of order items complete results=%j', results, req.user);
 
-            results.forEach(function(r) {
+            _.each(results, function(r, i) {
               if (r.state === 'rejected') {
-                log.warn('Add order item rejected reason=%j', r.reason, req.user);
+                log.warn('Add order item rejected reason=%j, record=%j', r.reason, records[i], req.user);
+                var ec = r.reason.content || r.reason;
+                records[i].error = ec.error || ec.message || JSON.stringify(ec);
+                errors.push(records[i]);
                 return;
               }
 
@@ -122,6 +131,8 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
                 log.warn(
                   'Failed to created orderitem status=%s, message=%s, error=%s',
                   status, message, content.error, req.user);
+                records[i].error = '' + content.error + ', status: ' + status + ', message: ' + message;
+                errors.push(records[i]);
                 return;
               }
 
@@ -134,9 +145,35 @@ module.exports = function $module(Customer, utils, Busboy, csv, when, _, hl, rx,
               }
             });
 
+            var error = {};
             var vals = _.values(customersById);
             log.info('Uploaded orderitems for customers=%s', vals.length, req.user);
-            res.json(vals);
+            if (errors.length) {
+              var errorfn = 'errors_' + moment(new Date()).format('YYYYMMDDHHmmss') + fn;
+              var errorfnDownload = 'tmp/' + errorfn;
+              var errorfile = conf.get('clientPath') + '/' + errorfnDownload;
+              var csvErrorStream = csv.createWriteStream({headers: true});
+              var writableStream = fs.createWriteStream(errorfile);
+
+              log.error('Encountered during order upload errors=%j, errorfile=%s', errors, errorfile, req.user);
+
+              writableStream.on('finish', function(){
+                log.debug('Done writing error errorfile=%s', errorfile, req.user);
+              });
+
+              csvErrorStream.pipe(writableStream);
+              _.each(errors, function(e) { csvErrorStream.write(e); });
+              csvErrorStream.write(null);
+
+              error.message = '' + errors.length + ' records failed to import.';
+              error.href = errorfnDownload;
+              error.link = 'Click here to download the failed records.';
+            }
+
+            res.json({
+              error: error,
+              customers: vals
+            });
           }).catch(function(e) {
             log.error('Failed processing upload responses error=%s', e.toString(), req.user);
             res.json(500, utils.errors.makeError(e));

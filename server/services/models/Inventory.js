@@ -227,7 +227,7 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
   InventorySchema.methods.import = function(rec) {
     this.tagId = makeTagId(rec.tagId || rec['Tag ID']);
     this.manufacturedOn = new Date(rec['Prod Date']);
-    this.productNumber = rec['Prod ']; //yes that is a space :(
+    this.productNumber = rec.Prod;
     if (!rec.Notes || /^\s*$/.test(rec.Notes) || /OK/ig.test(rec.Notes)) {
       this.status = 'ok';
     } else {

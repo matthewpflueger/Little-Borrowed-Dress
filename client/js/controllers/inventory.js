@@ -56,6 +56,7 @@ module.exports = function(_, moment) {
       $http
         .put('/inventory/' + entity.inventory._id, entity.inventory)
         .success(function(data, status) {
+          $scope.success.message = 'Saved inventory data.';
           $log.info('Saved inventory=%s, status=%s, data=%O', entity.inventory.tagId, status, data);
           var e = findEntity(data.inventory, entity.reservation.id);
           if (e) {
@@ -198,18 +199,15 @@ module.exports = function(_, moment) {
         .get('/inventory', config)
         .success(function(data, status) {
           $log.info('Fetched inventory=%O, status=%s', data, status);
-
           $scope.inventoryData = makeInventoryReservationRows(data);
         }).error(function(data, status) {
           if (status === 404) {
-            $log.info('No inventory found');
             $scope.inventoryData = [];
+            $scope.info.message = 'No inventory found.';
             return;
           }
           $log.error('Failed to fetch inventory data=%O, status=%s', data, status);
-          var error = new Error('Failed to fetch inventory');
-          error.data = { data: data, status: status };
-          throw error;
+          $scope.error.message = 'Failed to fetch inventory.';
         });
     };
 
@@ -281,17 +279,55 @@ module.exports = function(_, moment) {
       ]
     };
 
+    $scope.success = {
+      message: null
+    };
+
+    $scope.clearSuccess = function() {
+      $scope.success.message = null;
+    };
+
+    $scope.info = {
+      message: null
+    };
+
+    $scope.clearInfo = function() {
+      $scope.info.message = null;
+    };
+
+    $scope.warning = {
+      message: null
+    };
+
+    $scope.clearWarning = function() {
+      $scope.warning.message = null;
+    };
+
+    $scope.error = {
+      message: null
+    };
+
+    $scope.clearError = function() {
+      $scope.error.message = null;
+    };
+
     $scope.isUploading = false;
     $scope.startUploading = function() {
       $scope.isUploading = true;
     };
 
-    $scope.uploadComplete = function(inventory) {
-      $log.info('Completed upload of inventory=%O', inventory);
+    $scope.isUploading = false;
+    $scope.startUploading = function() {
+      $scope.isUploading = true;
+    };
+
+    $scope.uploadComplete = function(results) {
+      $log.info('Completed upload of results=%O', results);
       $scope.isUploading = false;
       global.jQuery('#uploadInventoryModal').modal('hide');
 
-      $scope.inventoryData = makeInventoryReservationRows(inventory);
+      _.assign($scope.error, results.error);
+      $scope.inventoryData = makeInventoryReservationRows(results.inventory);
     };
   }
 

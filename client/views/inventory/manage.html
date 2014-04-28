@@ -1,5 +1,31 @@
 <div data-ng-controller="InventoryController" data-ng-init="all()">
   <div class="container">
+    <div class="row">
+      <div class="col-md-12" data-ng-hide="error.message === null">
+        <div class="alert alert-danger alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearError()">&times;</button>
+          <strong>Error!</strong> {{error.message}} <a href="{{error.href}}" class="alert-link">{{error.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="warning.message === null">
+        <div class="alert alert-warning alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearWarning()">&times;</button>
+          <strong>Warning!</strong> {{warning.message}} <a href="{{warning.href}}" class="alert-link">{{warning.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="info.message === null">
+        <div class="alert alert-info alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearInfo()">&times;</button>
+          <strong>Info!</strong> {{info.message}} <a href="{{info.href}}" class="alert-link">{{info.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="success.message === null">
+        <div class="alert alert-success alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearSuccess()">&times;</button>
+          <strong>Success!</strong> {{success.message}} <a href="{{success.href}}" class="alert-link">{{success.link}}</a>
+        </div>
+      </div>
+    </div>
     <div class="row gridheader">
       <div class="col-md-6">
         <h4>Reservations</h4>
@@ -11,12 +37,6 @@
     <div class="row">
       <div class="col-md-6 selectedItems">
         <div class="smallGridStyle" data-ng-grid="resGridOptions"></div>
-<!--
-        Search by: &nbsp; &nbsp; &nbsp;
-        <input type="checkbox" data-ng-model="searchBy[0]"> Style
-        <input type="checkbox" data-ng-model="searchBy[1]"> Color
-        <input type="checkbox" data-ng-model="searchBy[2]"> Size
- -->
       </div>
       <div class="col-md-6">
         <div data-ng-hide="inventorySelections.length === 0">
@@ -52,32 +72,6 @@
                     Send to Cleaners
                   </button>
                 </div>
-<!--
-                <div class="btn-group">
-                  <button
-                      class="btn btn-default btn-sm"
-                      data-ng-click="shipOrderItem()"
-                      data-ng-disabled="!isShippable()">
-                    Ship Order Item
-                  </button>
-                </div>
-                <div class="btn-group">
-                  <button
-                      class="btn btn-default btn-sm"
-                      data-ng-click="releaseInventory()"
-                      data-ng-disabled="!isShippable()">
-                    Release
-                  </button>
-                </div>
-                <div class="btn-group">
-                  <button
-                      class="btn btn-default btn-sm"
-                      data-toggle="modal"
-                      data-target="#addOrderItemModal">
-                    Add Order Item
-                  </button>
-                </div>
- -->
               </div> <!-- btn-group-justified -->
             </div> <!-- col -->
           </div> <!-- row -->
@@ -219,90 +213,4 @@
       </div>
     </div>
   </div><!-- /Receive inventory modal -->
-
-  <!-- Add Inventory modal -->
-<!--
-  <div class="modal fade" id="addOrderItemModal" data-role="dialog" data-aria-labelledby="myModalLabel" data-aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" data-aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Add Item to Order #{{orderSelections[0].order.orderNumber}}</h4>
-        </div>
-        <div class="modal-body">
-          <form class="form-horizontal" data-role="form" name="addOrderItemForm" novalidate>
-            <div class="form-group">
-              <label for="newOrderItemStyle" class="col-sm-2 control-label">Style</label>
-              <div class="col-sm-10">
-                <input
-                    type="text"
-                    class="form-control"
-                    id="newOrderItemStyle"
-                    placeholder="Style"
-                    data-ng-model="newOrderItem.style"
-                    name="newOrderItemStyle"
-                    required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="newOrderItemColor" class="col-sm-2 control-label">Color</label>
-              <div class="col-sm-10">
-                <input
-                    type="text"
-                    class="form-control"
-                    id="newOrderItemColor"
-                    placeholder="Color"
-                    data-ng-model="newOrderItem.color"
-                    name="newOrderItemColor"
-                    required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="newOrderItemSize" class="col-sm-2 control-label">Size</label>
-              <div class="col-sm-10">
-                <input
-                    type="text"
-                    class="form-control"
-                    id="newOrderItemSize"
-                    placeholder="Size"
-                    data-ng-model="newOrderItem.size"
-                    name="newOrderItemSize"
-                    required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="newOrderItemNote" class="col-sm-2 control-label">Note</label>
-              <div class="col-sm-10">
-                <textarea
-                    class="form-control"
-                    rows="3"
-                    id="newOrderItemNote"
-                    data-ng-model="newOrderItem.note"
-                    name="newOrderItemNote">
-                </textarea>
-              </div>
-            </div>
-            <div class="form-group">
-              <div class="col-sm-offset-2 col-sm-10">
-                <div class="checkbox">
-                  <label>
-                    <input
-                        type="checkbox"
-                        id="newOrderItemBackup"
-                        name="newOrderItemBackup"
-                        data-ng-model="newOrderItem.backup"> Backup?
-                  </label>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" data-ng-click="addOrderItem(newOrderItem)">Save changes</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
- --></div>
+</div>

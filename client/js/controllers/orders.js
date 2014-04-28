@@ -339,8 +339,9 @@ module.exports = function(_, moment) {
         orders = orders.concat(makeOrderItemRows(c));
       });
 
+      _.assign($scope.error, results.error);
+      // $scope.error = results.error;
       $scope.orderData = orders;
-      $scope.error = results.error;
     };
 
     $scope.orderData = [];

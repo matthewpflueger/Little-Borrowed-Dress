@@ -93,9 +93,13 @@ module.exports = function(_, moment) {
       limitTo: 10
     };
 
+    function debounce(fun, timeout) {
+      return _.debounce(fun, timeout || 500);
+    }
+
     //FIXME need to debounce!!!
     //FIXME this is freaking hideous!!!
-    $scope.$watch('enteredInventoryForStyle', function (dt) {
+    $scope.$watch('enteredInventoryForStyle', debounce(function (dt) {
       if (!dt || !/^[a-z]{3,}$/.test(dt)) {
         $scope.inventoryQuery.style = null;
         return;
@@ -104,9 +108,9 @@ module.exports = function(_, moment) {
       $log.info('Saw update to enteredInventoryForStyle=%s', dt);
       $scope.inventoryQuery.style = dt;
       $scope.all();
-    });
+    }));
 
-    $scope.$watch('enteredInventoryForColor', function (dt) {
+    $scope.$watch('enteredInventoryForColor', debounce(function (dt) {
       if (!dt || !/^[a-z]{3,}$/.test(dt)) {
         $scope.inventoryQuery.color = null;
         return;
@@ -115,9 +119,9 @@ module.exports = function(_, moment) {
       $log.info('Saw update to enteredInventoryForColor=%s', dt);
       $scope.inventoryQuery.color = dt;
       $scope.all();
-    });
+    }));
 
-    $scope.$watch('enteredInventoryForSize', function (dt) {
+    $scope.$watch('enteredInventoryForSize', debounce(function (dt) {
       if (!dt || !/\d+/.test(dt)) {
         $scope.inventoryQuery.size = null;
         return;
@@ -126,12 +130,12 @@ module.exports = function(_, moment) {
       $log.info('Saw update to enteredInventoryForSize=%s', dt);
       $scope.inventoryQuery.size = dt.match(/(\d+)/g);
       $scope.all();
-    });
+    }));
       // //FIXME this logic is duplicated in the client/js/controllers/order and here and the Order model :(
       // if (entity.inventory.itemDescription[0].size.match) {
       //   entity.inventory.itemDescription[0].size = entity.inventory.itemDescription[0].size.match(/\d+/g);
       // }
-    $scope.$watch('enteredInventoryForDate', _.debounce(function (dt) {
+    $scope.$watch('enteredInventoryForDate', debounce(function (dt) {
       if (!dt || !/^(\d){1,2}\/(\d){1,2}\/(\d){2,4}$/.test(dt)) {
         $scope.inventoryQuery.inventoryForDate = null;
         return;
@@ -141,7 +145,7 @@ module.exports = function(_, moment) {
       $scope.previousPagesForDate = [];
       $scope.inventoryQuery.inventoryForDate = new Date(dt).toISOString();
       $scope.all();
-    }, 500));
+    }));
 
     $scope.$watch('inventoryQuery.limitTo', function() {
       $scope.all();

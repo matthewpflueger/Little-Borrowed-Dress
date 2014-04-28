@@ -63,19 +63,100 @@ module.exports = function(_, moment) {
     });
 
 
+    $scope.enteredOrdersForName = '';
+    $scope.enteredOrdersForEmail = '';
+    $scope.enteredOrdersForPhone = '';
+    $scope.enteredOrdersForStyle = '';
+    $scope.enteredOrdersForColor = '';
+    $scope.enteredOrdersForSize = '';
     $scope.enteredOrdersForDate = null;
     $scope.limitToOptions = [10, 25, 50, 100, 200];
     $scope.previousPagesForDate = [];
 
     $scope.ordersQuery = {
       inclusive: false,
+      name: null,
+      email: null,
+      phone: null,
       ordersForDate: null,
+      allocated: true,
+      style: null,
+      color: null,
+      size: null,
       limitTo: 10
     };
 
-    //FIXME could use a directive here to keep ordersQuery.ordersForDate and input field in sync
-    //check out http://stackoverflow.com/questions/15242592/angular-js-how-to-autocapitalize-an-input-field/15253892#15253892
-    $scope.$watch('enteredOrdersForDate', _.debounce(function (dt) {
+    function debounce(fun, timeout) {
+      return _.debounce(fun, timeout || 500);
+    }
+
+    $scope.$watch('enteredOrdersForName', debounce(function (dt) {
+      if (!dt || !/^\w{3,}/.test(dt)) {
+        $scope.ordersQuery.name = null;
+        return;
+      }
+
+      $log.info('Saw update to enteredOrdersForName=%s', dt);
+      $scope.ordersQuery.name = dt;
+      $scope.all();
+    }));
+
+    $scope.$watch('enteredOrdersForEmail', debounce(function (dt) {
+      if (!dt || !/^\w{3,}/.test(dt)) {
+        $scope.ordersQuery.email = null;
+        return;
+      }
+
+      $log.info('Saw update to enteredOrdersForEmail=%s', dt);
+      $scope.ordersQuery.email = dt;
+      $scope.all();
+    }));
+
+    $scope.$watch('enteredOrdersForPhone', debounce(function (dt) {
+      if (!dt || !/^\d{8,}$/.test(dt)) {
+        $scope.ordersQuery.phone = null;
+        return;
+      }
+
+      $log.info('Saw update to enteredOrdersForPhone=%s', dt);
+      $scope.ordersQuery.phone = dt;
+      $scope.all();
+    }));
+
+    $scope.$watch('enteredOrdersForStyle', debounce(function (dt) {
+      if (!dt || !/^[a-z]{3,}$/.test(dt)) {
+        $scope.ordersQuery.style = null;
+        return;
+      }
+
+      $log.info('Saw update to enteredOrdersForStyle=%s', dt);
+      $scope.ordersQuery.style = dt;
+      $scope.all();
+    }));
+
+    $scope.$watch('enteredOrdersForColor', debounce(function (dt) {
+      if (!dt || !/^[a-z]{3,}$/.test(dt)) {
+        $scope.ordersQuery.color = null;
+        return;
+      }
+
+      $log.info('Saw update to enteredOrdersForColor=%s', dt);
+      $scope.ordersQuery.color = dt;
+      $scope.all();
+    }));
+
+    $scope.$watch('enteredOrdersForSize', debounce(function (dt) {
+      if (!dt || !/\d+/.test(dt)) {
+        $scope.ordersQuery.size = null;
+        return;
+      }
+
+      $log.info('Saw update to enteredOrdersForSize=%s', dt);
+      $scope.ordersQuery.size = dt.match(/(\d+)/g);
+      $scope.all();
+    }));
+
+    function setOrdersForDate(dt) {
       if (!dt || !/^(\d){1,2}\/(\d){1,2}\/(\d){2,4}$/.test(dt)) {
         $scope.ordersQuery.ordersForDate = null;
         return;
@@ -84,8 +165,27 @@ module.exports = function(_, moment) {
       $log.info('Saw update to enteredOrdersForDate %s', dt);
       $scope.previousPagesForDate = [];
       $scope.ordersQuery.ordersForDate = new Date(dt).toISOString();
+    }
+
+    //FIXME could use a directive here to keep ordersQuery.ordersForDate and input field in sync
+    //check out http://stackoverflow.com/questions/15242592/angular-js-how-to-autocapitalize-an-input-field/15253892#15253892
+    $scope.$watch('enteredOrdersForDate', debounce(function (dt) {
+      setOrdersForDate(dt);
+      // if (!dt || !/^(\d){1,2}\/(\d){1,2}\/(\d){2,4}$/.test(dt)) {
+      //   $scope.ordersQuery.ordersForDate = null;
+      //   return;
+      // }
+
+      // $log.info('Saw update to enteredOrdersForDate %s', dt);
+      // $scope.previousPagesForDate = [];
+      // $scope.ordersQuery.ordersForDate = new Date(dt).toISOString();
       $scope.all();
-    }, 500));
+    }));
+
+
+    $scope.$watch('ordersQuery.allocated', function() {
+      $scope.all();
+    });
 
     $scope.$watch('ordersQuery.limitTo', function() {
       $scope.all();
@@ -117,6 +217,13 @@ module.exports = function(_, moment) {
       $scope.all();
     };
 
+    $scope.refresh = function() {
+      setOrdersForDate($scope.enteredOrdersForDate);
+      $scope.previousPagesForDate = [];
+      $scope.ordersQuery.inclusive = true;
+      $scope.all();
+    };
+
     $scope.all = function() {
       var oq = $scope.ordersQuery;
       var config = { params: oq };
@@ -142,9 +249,6 @@ module.exports = function(_, moment) {
             return;
           }
           $log.error('Failed to fetch orders data=%O, status=%s', data, status);
-          var error = new Error('Failed to fetch orders');
-          error.data = { data: data, status: status };
-          throw error;
         });
     };
 
@@ -237,6 +341,7 @@ module.exports = function(_, moment) {
       enableColumnResize: true,
       enableColumnReordering: true,
       sortInfo: { fields: ['order.shipByDate'], directions: ['desc']},
+      rowTemplate: 'views/allocated.html',
       columnDefs: [
         {field:'order.purchasedOn', displayName:'Purchased On', enableCellEdit: false, width: 110, cellFilter: 'date'},
         {field:'order.orderNumber', displayName:'Order', enableCellEdit: false, width: 90},

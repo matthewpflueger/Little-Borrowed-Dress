@@ -92,8 +92,33 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
 
   function findCustomerOrdersByDate(limitBy) { //forDate, limitTo) {
     limitBy = limitBy || {};
+    log.debug('Searching for customer orders limitBy=%j', limitBy, {});
 
     var query = Customer.find();
+
+    if (limitBy.name) {
+      query = query.where('name', new RegExp(limitBy.name, 'i'));
+    }
+    if (limitBy.email) {
+      query = query.where('email', new RegExp(limitBy.email, 'i'));
+    }
+    if (parseInt(limitBy.phone)) {
+      query = query.where('telephone').equals(parseInt(limitBy.phone));
+    }
+
+    if (!limitBy.allocated || limitBy.allocated === 'false') {
+      query = query.where('orders.orderitems.inventory').equals(null);
+    }
+    if (limitBy.style) {
+      query = query.where('orders.orderitems.itemDescription.style', new RegExp(limitBy.style, 'i'));
+    }
+    if (limitBy.color) {
+      query = query.where('orders.orderitems.itemDescription.color', new RegExp(limitBy.color, 'i'));
+    }
+    if (limitBy.size && limitBy.size.length > 0) {
+      log.debug('Limiting by size=%j', limitBy.size, {});
+      query = query.where('orders.orderitems.itemDescription.size').all(limitBy.size);
+    }
     if (limitBy.ordersForDate) {
       query = query.where('orders.forDate');
       if (limitBy.inclusive === 'true' || limitBy.inclusive === true) {
@@ -102,6 +127,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
         query = query.lt(limitBy.ordersForDate);
       }
     }
+
     query = query.sort('-orders.forDate').limit(limitBy.limitTo || 25);
 
     return check(nodefn.lift(query.exec.bind(query))(), 'No customer orders found');

@@ -106,7 +106,7 @@ module.exports = function $module(mongoose, moment, _, utils, Address, OrderItem
     this.forDate = new Date(rec['Wedding Date']);
     log.debug(
       'Order forDate=%s, rec[\'Wedding Date\']=%s',
-      this.forDate, rec['Wedding Date']);
+      this.forDate, rec['Wedding Date'], user);
 
     //normalize the year as the import data typically represents years as two digits which Javascript
     //takes to mean between 1900 - 1999 :(
@@ -114,7 +114,7 @@ module.exports = function $module(mongoose, moment, _, utils, Address, OrderItem
       this.forDate.setFullYear(this.forDate.getFullYear() - 1900 + 2000);
       log.warn(
         'Normalized order forDate=%s, rec[\'Wedding Date\']=%s',
-        this.forDate, rec['Wedding Date']);
+        this.forDate, rec['Wedding Date'], user);
     }
 
 

@@ -81,7 +81,7 @@
 
     <!-- Actions for main grid -->
     <div class="row gridheader">
-      <div class="col-md-4">
+      <div class="col-md-1">
         <div class="btn-group">
           <button
               class="btn btn-default btn-xs"
@@ -91,12 +91,37 @@
           </button>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-9">
         <div class="pull-right">
         <form class="form-inline" data-role="form">
+          <input type="checkbox" data-ng-model="ordersQuery.allocated"> Allocated
+          <div class="form-group">
+            <label class="sr-only " for="ordersForStyle">Style</label>
+            <input class="thin short" type="text" data-ng-model="enteredOrdersForStyle" id="ordersForStyle" placeholder="Style">
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="ordersForColor">Color</label>
+            <input class="thin short" type="text" data-ng-model="enteredOrdersForColor" id="ordersForColor" placeholder="Color">
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="ordersForSize">Size</label>
+            <input class="thin short" type="text" data-ng-model="enteredOrdersForSize" id="ordersForSize" placeholder="Size">
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="name">Name</label>
+            <input class="thin medium" type="text" data-ng-model="enteredOrdersForName" id="name" placeholder="Name">
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="email">Email</label>
+            <input class="thin" type="text" data-ng-model="enteredOrdersForEmail" id="email" placeholder="Email">
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="phone">Phone</label>
+            <input class="thin short" type="text" data-ng-model="enteredOrdersForPhone" id="phone" placeholder="Phone">
+          </div>
           <div class="form-group">
             <label class="sr-only " for="ordersForDate">Orders For Date</label>
-            <input class="thin" type="datetime" data-ng-model="enteredOrdersForDate" id="ordersForDate" placeholder="Orders For Date">
+            <input class="thin medium" type="datetime" data-ng-model="enteredOrdersForDate" id="ordersForDate" placeholder="For Date">
           </div>
           <div class="form-group">
             <label class="sr-only" for="limitTo">Limit</label>
@@ -107,7 +132,7 @@
         </form>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-2">
         <div class="pull-right">
           <button
               type="button"
@@ -132,7 +157,7 @@
               class="btn btn-default btn-xs"
               data-toggle="tooltip"
               data-placement="left" title="Refresh order items"
-              data-ng-click="all()">
+              data-ng-click="refresh()">
             Refresh
           </button>
         </div>

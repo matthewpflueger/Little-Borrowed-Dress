@@ -1,0 +1,6 @@
+<div style="height: 100%" data-ng-class="{green: row.getProperty('orderitem').inventory != null}">
+  <div data-ng-style="{ 'cursor': row.cursor }" data-ng-repeat="col in renderedColumns" data-ng-class="col.colIndex()" class="ngCell ">
+    <div class="ngVerticalBar" data-ng-style="{height: rowHeight}" data-ng-class="{ ngVerticalBarVisible: !$last }"></div>
+    <div data-ng-cell></div>
+  </div>
+</div>

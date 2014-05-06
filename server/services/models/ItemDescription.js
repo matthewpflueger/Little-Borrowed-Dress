@@ -60,8 +60,8 @@ module.exports = function $module(mongoose, uuid, crypto, helpers, _) {
     'olivia': 1455,
     'julie': 1301,
     'julie-elizabeth': 1311,
-    'mia': 1,
-    'grace': 2
+    'mia': 1406,
+    'grace': 1406
   };
 
   var styleLengthToCutMap = {

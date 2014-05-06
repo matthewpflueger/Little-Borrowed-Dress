@@ -1,70 +1,99 @@
-<div data-ng-controller="ManufactureController" data-ng-init="all()">
-  <div class=".container">
+<div data-ng-controller="InventoryController" data-ng-init="all()">
+  <div class="container">
     <div class="row">
-      <div class="col-md-6 selectedItems">
-        <div class="smallGridStyle" data-ng-grid="smallGridOptions"></div>
-        Search by: &nbsp; &nbsp; &nbsp;
-        <input type="checkbox" data-ng-model="searchBy[0]"> Style
-        <input type="checkbox" data-ng-model="searchBy[1]"> Color
-        <input type="checkbox" data-ng-model="searchBy[2]"> Size
+      <div class="col-md-12" data-ng-hide="error.message === null">
+        <div class="alert alert-danger alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearError()">&times;</button>
+          <strong>Error!</strong> {{error.message}} <a href="{{error.href}}" class="alert-link">{{error.link}}</a>
+        </div>
       </div>
-      <div class="col-md-6">
-        <div data-ng-hide="orderSelections.length === 0">
-          <h5>Actions on Order #{{orderSelections[0].order.orderNumber}}</h5>
-          <div class="btn-group btn-group-justified">
-            <div class="btn-group">
-              <button
-                  class="btn btn-default btn-sm"
-                  data-ng-click="reserveInventory()"
-                  data-ng-disabled="!isInventoryReservable()">
-                Reserve Inventory
-              </button>
-            </div>
-            <div class="btn-group">
-              <button
-                  class="btn btn-default btn-sm"
-                  data-ng-click="manufactureOrderItem()"
-                  data-ng-disabled="hasAssignedInventory()">
-                Manufacture
-              </button>
-            </div>
-            <div class="btn-group">
-              <button
-                  class="btn btn-default btn-sm"
-                  data-ng-click="shipOrderItem()"
-                  data-ng-disabled="!hasAssignedInventory()">
-                Ship Order Item
-              </button>
-            </div>
-            <div class="btn-group">
-              <button
-                  class="btn btn-default btn-sm"
-                  data-ng-click="releaseInventory()"
-                  data-ng-disabled="!hasAssignedInventory()">
-                Release Inventory
-              </button>
-            </div>
-          </div>
+      <div class="col-md-12" data-ng-hide="warning.message === null">
+        <div class="alert alert-warning alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearWarning()">&times;</button>
+          <strong>Warning!</strong> {{warning.message}} <a href="{{warning.href}}" class="alert-link">{{warning.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="info.message === null">
+        <div class="alert alert-info alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearInfo()">&times;</button>
+          <strong>Info!</strong> {{info.message}} <a href="{{info.href}}" class="alert-link">{{info.link}}</a>
+        </div>
+      </div>
+      <div class="col-md-12" data-ng-hide="success.message === null">
+        <div class="alert alert-success alert-dismissable">
+          <button type="button" class="close" data-ng-click="clearSuccess()">&times;</button>
+          <strong>Success!</strong> {{success.message}} <a href="{{success.href}}" class="alert-link">{{success.link}}</a>
         </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-12">
-        <button
-            type="button"
-            class="btn btn-default btn-xs pull-right"
-            data-toggle="tooltip"
-            data-placement="left"
-            title="Refresh items to manufacture"
-            data-ng-click="all()">
-          Refresh
-        </button>
+
+    <!-- Actions for main grid -->
+    <div class="row gridheader">
+      <div class="col-md-4">
+        <div class="btn-group">
+          <button
+              class="btn btn-default btn-xs"
+              data-toggle="modal"
+              data-target="#uploadInventoryModal">
+            Manufacture Inventory
+          </button>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="pull-right">
+        <form class="form-inline" data-role="form">
+          <div class="form-group">
+            <input type="checkbox" data-ng-model="enteredInventoryHideSent"> Hide Sent
+          </div>
+          <div class="form-group">
+            <label class="sr-only " for="inventoryForDate">Inventory For Date</label>
+            <input class="thin" type="datetime" data-ng-model="enteredInventoryForDate" id="inventoryForDate" placeholder="Inventory For Date">
+          </div>
+          <div class="form-group">
+            <label class="sr-only" for="limitTo">Limit</label>
+            <select data-ng-model="inventoryQuery.limitTo" data-ng-options="lto for lto in limitToOptions">
+              <option>10</option>
+            </select>
+          </div>
+        </form>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="pull-right">
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Previous page"
+              data-ng-click="previousPage()"
+              data-ng-disabled="!previousPagesForDate.length">
+            &lt;&lt;&lt;
+          </button>
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Next page"
+              data-ng-click="nextPage()"
+              data-ng-disabled="!datesForPaging()">
+            &gt;&gt;&gt;
+          </button>
+          <button
+              type="button"
+              class="btn btn-default btn-xs"
+              data-toggle="tooltip"
+              data-placement="left" title="Refresh inventory items"
+              data-ng-click="all()">
+            Refresh
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- Main grid -->
     <div class="row">
       <div class="col-md-12">
         <div class="gridStyle" data-ng-grid="gridOptions"></div>
       </div>
     </div>
-  </div>
- </div>
+</div>

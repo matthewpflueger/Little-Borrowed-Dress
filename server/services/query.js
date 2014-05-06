@@ -173,6 +173,15 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
     return check(nodefn.lift(query.exec.bind(query))(), 'No inventory found');
   }
 
+  /**
+   * For the given order item, find matching inventory using the order item's style, color,
+   * and size.  We also determine the availability of the matching inventory on the given date.
+   *
+   * @param  {OrderItem} orderitem the order item to find inventory for
+   * @param  {Date} forDate   the date the inventory is needed for
+   * @param  {[type]} limitBy   limit by style, color, size (some or all can be used to limit the results)
+   * @return {Array[Object]}    list of inventory that matches
+   */
   function findInventoryForOrderItemForDate(orderitem, forDate, limitBy) {
     limitBy = limitBy || { style: true, color: true, size: true};
     log.info(
@@ -202,6 +211,8 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
     log.info('Query inventory params=%j', params, {});
 
 
+    //if the order item has assigned inventory then lets fetch it
+    //and make sure it gets returned in the results...
     var assignedInventoryPromise = null;
     if (orderitem.inventory) {
       assignedInventoryPromise = findInventoryById(orderitem.inventory)
@@ -241,6 +252,40 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
     });
   }
 
+  function findInventoryToManufacture(limitBy) {
+    limitBy = limitBy || {};
+    log.debug('Limiting by limitBy=%j', limitBy, {});
+
+    var query = Inventory.find({ 'manufacturedOn': null });
+
+    if (limitBy.hideSent === 'true' || limitBy.hideSent === true) {
+      query = query.find({ 'manufacturedSentOn': null});
+    }
+
+    if (limitBy.inventoryForDate) {
+      query = query.where('reservations.forDate');
+      if (limitBy.inclusive === 'true' || limitBy.inclusive === true) {
+        query = query.lte(limitBy.inventoryForDate);
+      } else {
+        query = query.lt(limitBy.inventoryForDate);
+      }
+    }
+
+    if (limitBy.createdOn) {
+      query = query.where('createdOn');
+      if (limitBy.inclusive === 'true' || limitBy.inclusive === true) {
+        query = query.lte(limitBy.createdOn);
+      } else {
+        query = query.lt(limitBy.createdOn);
+      }
+    }
+
+    query = query.sort('-reservations.date -createdOn').limit(limitBy.limitTo || 25);
+
+    return check(nodefn.lift(query.exec.bind(query))(), 'No inventory to manufacture found');
+  }
+
+
   $module.exports = {
     NotFoundError: NotFoundError,
     nextSeq: nextSeq,
@@ -254,7 +299,8 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
     findOrderById: findOrderById,
     findOrderItemById: findOrderItemById,
     findInventoryReservationsForDate: findInventoryReservationsForDate,
-    findInventoryForOrderItemForDate: findInventoryForOrderItemForDate
+    findInventoryForOrderItemForDate: findInventoryForOrderItemForDate,
+    findInventoryToManufacture: findInventoryToManufacture
   };
   return $module.exports;
 };

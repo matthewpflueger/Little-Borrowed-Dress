@@ -1,6 +1,6 @@
 'use strict';
 
-var Reservation = frequire(__filename)();
+var Reservation = spec.frequire(__filename)();
 var moment = require('moment');
 require('twix');
 

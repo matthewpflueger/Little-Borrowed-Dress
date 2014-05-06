@@ -26,6 +26,7 @@ angular.module('lbd', [
   .controller('IndexController', require('./controllers/index')())
   .controller('HeaderController', require('./controllers/header')())
   .controller('InventoryController', require('./controllers/inventory')())
+  .controller('ManufactureController', require('./controllers/manufacture')())
   .controller('OrderController', require('./controllers/orders')());
 
 angular.element(document).ready(function() {

@@ -1,30 +1,37 @@
 'use strict';
 
-var Order = frequire(__filename)();
-var moment = require('moment');
+var Order = spec.frequire(__filename)();
+var fdate = spec.fdate;
+
+var user = 'userId';
+var today = fdate(new Date());
+
+function createTestRecord() {
+  var rec = {
+    'Order #': '100010001',
+    'Wedding Date': today,
+    'OrderType': 'Rental',
+    'PRODUCT DETAILS': 'teststyle',
+    'Color': 'red',
+    'Size': '0 | 2 55',
+    'QTY ORDERED': '1',
+    'Free 2nd Size': 'Size: 4 | 6 59'
+  };
+  return rec;
+}
+
+function createTestOrder(r, u) {
+  var order = new Order();
+  order.import(r || createTestRecord(), u || user);
+  return order;
+}
 
 describe('Order', function() {
 
   it('should import data from a given record', function() {
-    function fdate(date) {
-      return moment(date).format('M/D/YY');
-    }
 
-    var user = 'userId';
-    var today = fdate(new Date());
-    var rec = {
-      'Order #': '100010001',
-      'Wedding Date': today,
-      'OrderType': 'Rental',
-      'PRODUCT DETAILS': 'teststyle',
-      'Color': 'red',
-      'Size': '0 | 2 55',
-      'QTY ORDERED': '1',
-      'Free 2nd Size': 'Size: 4 | 6 59'
-    };
-
-    var order = new Order();
-    order.import(rec, user);
+    var rec = createTestRecord();
+    var order = createTestOrder(rec);
     expect(order.orderNumber).toBe(100010001);
     expect(order.type).toBe('wedding');
     expect(fdate(order.forDate)).toBe(today);
@@ -47,30 +54,31 @@ describe('Order', function() {
     expect(order.orderitems.length).toBe(2);
 
     rec['Wedding Date'] = '12/31/1930';
-    order = new Order();
-    order.import(rec, user);
+    order = createTestOrder(rec);
     expect(order.type).toBe('fitting');
     expect(fdate(order.forDate)).toBe('12/31/14');
 
     rec['Wedding Date'] = '12/31/30';
-    order = new Order();
-    order.import(rec, user);
+    order = createTestOrder(rec);
     expect(order.type).toBe('fitting');
     expect(fdate(order.forDate)).toBe('12/31/14');
 
     rec['Wedding Date'] = '12/31/24';
-    order = new Order();
-    order.import(rec, user);
+    order = createTestOrder(rec);
     expect(order.type).toBe('wedding');
     expect(fdate(order.forDate)).toBe('12/31/14');
 
     rec.OrderType = 'test';
-    order = new Order();
-    order.import(rec, user);
+    order = createTestOrder(rec);
     expect(order.type).toBe('purchase');
     expect(fdate(order.forDate)).toBe('12/31/14');
     expect(order.orderitems.length).toBe(1);
   });
 
 });
+
+module.exports = {
+  createTestRecord: createTestRecord,
+  createTestOrder: createTestOrder
+};
 

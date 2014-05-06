@@ -45,6 +45,17 @@ module.exports = function $module(fs, moment, Busboy, csv, when, query, router, 
     });
   }
 
+  function inventoryForManufacture(req, res) {
+    query.findInventoryForManufacture(req.query).then(function(results) {
+      res.json(results);
+    }).catch(query.NotFoundError, function(e) {
+      res.send(404, utils.errors.makeError(e));
+    }).catch(function(e) {
+      log.error(e.toString(), req.user);
+      res.send(500, utils.errors.makeError(e));
+    });
+  }
+
   function inventoryForOrderItem(req, res) {
     query.findInventoryForOrderItemForDate(
         req.orderitem,
@@ -156,6 +167,7 @@ module.exports = function $module(fs, moment, Busboy, csv, when, query, router, 
     shipInventory: shipInventory,
     inventoryForOrderItem: inventoryForOrderItem,
     manufactureOrderItem: manufactureOrderItem,
+    inventoryForManufacture: inventoryForManufacture,
     upload: upload
   };
   return $module.exports;

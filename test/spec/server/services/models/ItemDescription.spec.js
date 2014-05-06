@@ -1,6 +1,6 @@
 'use strict';
 
-var ItemDescription = frequire(__filename)();
+var ItemDescription = spec.frequire(__filename)();
 
 describe('ItemDescription', function() {
 

@@ -1,6 +1,8 @@
 'use strict';
 
-var Inventory = frequire(__filename)();
+var Inventory = spec.frequire(__filename)();
+
+var order = require('./Order.spec').createTestOrder();
 
 describe('Inventory', function() {
 
@@ -25,5 +27,18 @@ describe('Inventory', function() {
     expect(i.reservations[1].reservationStart).toNotBe(today);
     expect(i.reservations[0].reservationStart).toBe(today);
     expect(i.reservations[0].reservationEnd).toBe(today);
+  });
+
+  it('should manufacture itself based on order item', function() {
+    var customer = { email: 'testemail', name: 'testname', _id: 'testid' };
+    var oi = order.orderitems[0];
+    var productNumber = 9999;
+
+    var i = Inventory.manufactureForOrderItem(customer, order, oi, productNumber);
+    expect(i.reservations.length).toBe(1);
+    expect(i.productNumber).toBe(9999);
+    expect(spec.fdate(i.manufactureRequestedOn)).toBe(spec.fdate(new Date()));
+    expect(i.manufactureSentOn).toBe(undefined);
+    expect(i.manufacturedOn).toBe(undefined);
   });
 });

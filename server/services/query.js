@@ -252,7 +252,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
     });
   }
 
-  function findInventoryToManufacture(limitBy) {
+  function findInventoryForManufacture(limitBy) {
     limitBy = limitBy || {};
     log.debug('Limiting by limitBy=%j', limitBy, {});
 
@@ -300,7 +300,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
     findOrderItemById: findOrderItemById,
     findInventoryReservationsForDate: findInventoryReservationsForDate,
     findInventoryForOrderItemForDate: findInventoryForOrderItemForDate,
-    findInventoryToManufacture: findInventoryToManufacture
+    findInventoryForManufacture: findInventoryForManufacture
   };
   return $module.exports;
 };

@@ -404,6 +404,7 @@ module.exports = function(_, moment) {
       enableColumnReordering: false,
       columnDefs: [
         {field:'inventory.tagId', displayName:'Tag Id'},
+        {field:'inventory.productNumber', displayName:'Prod #'},
         {field:'inventory.itemDescription[0].style', displayName:'Style', width: '70'},
         {field:'inventory.itemDescription[0].size', displayName:'Size', width: '70', cellFilter: 'join:" | "'},
         {field:'inventory.itemDescription[0].color', displayName:'Color', width: '70'},
@@ -492,6 +493,7 @@ module.exports = function(_, moment) {
       columnDefs: [
         {field:'availabilityStatus', displayName:'Availability', width: '170'},
         {field:'inventory.tagId', displayName:'Tag Id'},
+        {field:'inventory.productNumber', displayName:'Prod #'},
         {field:'inventory.itemDescription[0].style', displayName:'Style', width: '70'},
         {field:'inventory.itemDescription[0].size', displayName:'Size', width: '70', cellFilter: 'join:" | "'},
         {field:'inventory.itemDescription[0].color', displayName:'Color', width: '70'},

@@ -64,6 +64,40 @@ module.exports = function $module(mongoose, uuid, crypto, helpers, _) {
     'grace': 1406
   };
 
+  var styleToFactoryStyleMap = {
+    'cheryl': 'cheryl',
+    'leigh': 'cheryl - leigh',
+    'hillary': 'hillary',
+    'jane': 'hillary - jane',
+    'catherine': 'catherine',
+    'ann': 'catherine - ann',
+    'kate': 'kate',
+    'madison': 'kate - madison',
+    'emma': 'emma',
+    'olivia': 'emma - olivia',
+    'julie': 'julie (old style)',
+    'julie-elizabeth': 'julie-elizabeth (old style)',
+    'mia': 'mia',
+    'grace': 'mia - grace'
+  };
+
+  var styleToFactoryDescriptionMap = {
+    'cheryl': 'halter',
+    'leigh': 'halter - gown',
+    'hillary': 'strapless',
+    'jane': 'strapless - gown',
+    'catherine': 'one shoulder',
+    'ann': 'one shoulder gown',
+    'kate': 'wrap',
+    'madison': 'wrap gown',
+    'emma': 'scoop',
+    'olivia': 'scoop - gown',
+    'julie': 'v-neck',
+    'julie-elizabeth': 'v-neck - gown',
+    'mia': 'new strapless',
+    'grace': 'new strapless gown'
+  };
+
   var styleLengthToCutMap = {
     'cheryl': { '0': 'cocktail' },
     'leigh': { '55': 'skirt - 42"', '59': 'skirt - 45"' },
@@ -184,6 +218,14 @@ module.exports = function $module(mongoose, uuid, crypto, helpers, _) {
 
   ItemDescriptionSchema.virtual('styleNumber').get(function() {
     return numberForStyle(this.style);
+  });
+
+  ItemDescriptionSchema.virtual('factoryStyle').get(function() {
+    return styleToFactoryStyleMap[this.style] + ' (' + numberForStyle(this.style) + ')';
+  });
+
+  ItemDescriptionSchema.virtual('factoryDescription').get(function() {
+    return styleToFactoryDescriptionMap[this.style];
   });
 
   ItemDescriptionSchema.virtual('cut').get(function() {

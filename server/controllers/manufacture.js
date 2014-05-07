@@ -51,10 +51,10 @@ module.exports = function $module(fs, moment, Busboy, csv, when, query, router, 
         var inv = r.value.content.inventory;
         var d = {
           'Order #': inv.productNumber,
-          'Style': inv.itemDescription[0].style + ' (' + inv.itemDescription[0].styleNumber + ')',
+          'Style': inv.itemDescription[0].factoryStyle,
           'Size': inv.itemDescription[0].sizeDesc,
           'Color': inv.itemDescription[0].color,
-          'Description': '',
+          'Description': inv.itemDescription[0].factoryDescription,
           'Length': inv.itemDescription[0].cut,
           'LBD Notes': records[i].orderNumber
         };

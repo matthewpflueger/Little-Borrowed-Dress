@@ -7,6 +7,24 @@ module.exports = function $module(_) {
 
   _ = _ || require('lodash');
 
+
+  function SendManufactureInventory(inventory, user, options) {
+    _.assign(_.defaults(this, SendManufactureInventory), options);
+    this.inventory = inventory._id || inventory;
+    this.user = user;
+  }
+  SendManufactureInventory.routingKey = 'commands.inventory.manufacture.send';
+
+  function InventoryManufactureSent(inventory, user, options) {
+    _.assign(_.defaults(this, InventoryManufactureSent), options);
+    this.inventory = inventory.toJSON();
+    this.user = user;
+  }
+  InventoryManufactureSent.routingKey = 'events.inventory.manufacture.sent';
+  InventoryManufactureSent.status = 200;
+  InventoryManufactureSent.message = 'Inventory manufacture sent';
+
+
   function UpdateInventory(inventory, data, user, options) {
     _.assign(_.defaults(this, UpdateInventory), options);
     this.inventory = inventory._id || inventory;
@@ -149,11 +167,14 @@ module.exports = function $module(_) {
   InventoryImported.status = 201;
   InventoryImported.message = 'Inventory imported';
 
+
   $module.exports = {
     UpdateInventory: UpdateInventory,
     InventoryUpdated: InventoryUpdated,
     ShipInventory: ShipInventory,
     InventoryShipped: InventoryShipped,
+    SendManufactureInventory: SendManufactureInventory,
+    InventoryManufactureSent: InventoryManufactureSent,
     RequestManufactureInventory: RequestManufactureInventory,
     InventoryManufactureRequested: InventoryManufactureRequested,
     ReserveInventory: ReserveInventory,

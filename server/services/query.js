@@ -259,7 +259,7 @@ module.exports = function $module(util, _, when, nodefn, Customer, Inventory, Se
     var query = Inventory.find({ 'manufacturedOn': null });
 
     if (limitBy.hideSent === 'true' || limitBy.hideSent === true) {
-      query = query.find({ 'manufacturedSentOn': null});
+      query = query.find({ 'manufactureSentOn': null});
     }
 
     if (limitBy.inventoryForDate) {

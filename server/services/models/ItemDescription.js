@@ -187,11 +187,32 @@ module.exports = function $module(mongoose, uuid, crypto, helpers, _) {
   });
 
   ItemDescriptionSchema.virtual('cut').get(function() {
-    return cutForStyleLength(this.size);
+    return cutForStyleLength(this.style, this.size);
   });
 
   ItemDescriptionSchema.virtual('length').get(function() {
     return sizeLength(this.size);
+  });
+
+  ItemDescriptionSchema.virtual('sizeDesc').get(function() {
+    if (!this.size || this.size.length === 0) {
+      return '';
+    }
+
+    var d = this.size[0];
+    if (this.size.length > 1) {
+      d = d + ' | ' + this.size[1];
+    }
+
+    if (this.size.length > 2) {
+      if (this.size[2] === '55') {
+        d = d + ' regular';
+      } else if (this.size[2] === '59') {
+        d = d + ' long';
+      }
+    }
+
+    return d;
   });
 
   var ItemDescription = mongoose.model('ItemDescription', ItemDescriptionSchema);

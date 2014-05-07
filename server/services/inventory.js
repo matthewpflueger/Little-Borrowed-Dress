@@ -1,10 +1,11 @@
 'use strict';
 
-module.exports = function $module(when, nodefn, query, router, Inventory, cmds, utils) {
+module.exports = function $module(_, when, nodefn, query, router, Inventory, cmds, utils) {
   if ($module.exports) {
     return $module.exports;
   }
 
+  _ = _ || require('lodash');
   when = when || require('when');
   nodefn = nodefn || require('when/node');
 
@@ -25,6 +26,7 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
       });
     });
   }
+
 
   function shipInventory(msg) {
     log.info('About to ship inventory msg=%j', msg, msg.content.user);
@@ -109,6 +111,25 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
     });
   }
 
+
+  function sendManufactureInventory(msg) {
+    var user = msg.content.user;
+    log.debug('About to send manufacture inventory msg=%j', msg, user);
+
+    return query.findInventoryById(msg.content.inventory).then(function(i) {
+      if (!i.sendToManufacturer()) {
+        log.error('Cannot send to manufacturer inventory=%j', i, user);
+        return { status: 412, message: 'Inventory not sent to manufacturer' };
+      }
+
+      return nodefn.lift(i.save.bind(i))().then(function(i) {
+        log.debug('Successfully sent to manufacturer inventory=%j', i, user);
+        return new cmds.InventoryManufactureSent(i[0], user);
+      });
+    });
+  }
+
+
   function reserveInventory(msg) {
     log.info('About to reserveInventory msg=%j', msg, msg.content.user);
 
@@ -153,6 +174,7 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
     });
   }
 
+
   function releaseInventory(msg) {
     log.info('About to releaseInventory msg=%j', msg, msg.content.user);
 
@@ -185,6 +207,7 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
     });
   }
 
+
   function importInventory(msg) {
     var corrId = msg.properties.correlationId;
     var user = msg.content.user;
@@ -210,9 +233,11 @@ module.exports = function $module(when, nodefn, query, router, Inventory, cmds, 
         });
   }
 
+
   router.receive(cmds.UpdateInventory.routingKey, updateInventory);
   router.receive(cmds.ShipInventory.routingKey, shipInventory);
   router.receive(cmds.RequestManufactureInventory.routingKey, requestManufactureInventory);
+  router.receive(cmds.SendManufactureInventory.routingKey, sendManufactureInventory);
   router.receive(cmds.ReserveInventory.routingKey, reserveInventory);
   router.receive(cmds.ReleaseInventory.routingKey, releaseInventory);
   router.receive(cmds.ImportInventory.routingKey, importInventory);

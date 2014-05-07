@@ -116,6 +116,15 @@ module.exports = function $module(mongoose, uuid, _, ItemDescription, Reservatio
     return true;
   };
 
+  InventorySchema.methods.sendToManufacturer = function() {
+    if (!this.manufactureRequestedOn) {
+      return false;
+    }
+    if (!this.manufactureSentOn) {
+      this.manufactureSentOn = new Date();
+    }
+    return this;
+  };
 
   InventorySchema.statics.manufactureForOrderItem = function(customer, order, orderitem, productNumber) {
     var i = new Inventory();

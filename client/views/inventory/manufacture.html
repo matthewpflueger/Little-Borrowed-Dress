@@ -33,8 +33,8 @@
         <div class="btn-group">
           <button
               class="btn btn-default btn-xs"
-              data-toggle="modal"
-              data-target="#uploadInventoryModal">
+              data-ng-click="manufactureInventory()"
+              data-ng-disabled="inventorySelections.length === 0">
             Manufacture Inventory
           </button>
         </div>
@@ -43,12 +43,14 @@
         <div class="pull-right">
         <form class="form-inline" data-role="form">
           <div class="form-group">
-            <input type="checkbox" data-ng-model="enteredInventoryHideSent"> Hide Sent
+            <input type="checkbox" data-ng-model="inventoryQuery.hideSent"> Hide Sent
           </div>
+<!--
           <div class="form-group">
             <label class="sr-only " for="inventoryForDate">Inventory For Date</label>
             <input class="thin" type="datetime" data-ng-model="enteredInventoryForDate" id="inventoryForDate" placeholder="Inventory For Date">
           </div>
+ -->
           <div class="form-group">
             <label class="sr-only" for="limitTo">Limit</label>
             <select data-ng-model="inventoryQuery.limitTo" data-ng-options="lto for lto in limitToOptions">

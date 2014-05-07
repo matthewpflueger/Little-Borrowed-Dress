@@ -23,6 +23,8 @@ describe('ItemDescription', function() {
     expect(ItemDescription.sizeLength('0')).toBe('0');
     expect(ItemDescription.sizeLength('0 | 2')).toBe('0');
     expect(ItemDescription.sizeLength('0 | 2 | 59')).toBe('59');
+    expect(ItemDescription.sizeLength('0 | 2 Long')).toBe('59');
+    expect(ItemDescription.sizeLength('0 | 2 Regular')).toBe('55');
   });
 
   it('should translate style and size to cut', function() {
@@ -33,5 +35,23 @@ describe('ItemDescription', function() {
     expect(ItemDescription.cutForStyleLength('leigh', '0 | 2 55')).toBe('skirt - 42"');
     expect(ItemDescription.cutForStyleLength('leigh', '0 | 2 59')).toBe('skirt - 45"');
     expect(ItemDescription.cutForStyleLength('leigh', '0 | 2 0')).toBe('');
+  });
+
+  it('should return a nice size description', function() {
+    var i = new ItemDescription();
+    i.import({ style: 'teststyle', color: 'testcolor', size: '0 | 2 55'});
+    expect(i.sizeDesc).toBe('0 | 2 regular');
+
+    i = new ItemDescription();
+    i.import({ style: 'teststyle', color: 'testcolor', size: '0 | 2 59'});
+    expect(i.sizeDesc).toBe('0 | 2 long');
+
+    i = new ItemDescription();
+    i.import({ style: 'teststyle', color: 'testcolor', size: '0 | 2 regular'});
+    expect(i.sizeDesc).toBe('0 | 2 regular');
+
+    i = new ItemDescription();
+    i.import({ style: 'teststyle', color: 'testcolor', size: '0 | 2 Long'});
+    expect(i.sizeDesc).toBe('0 | 2 long');
   });
 });

@@ -7,11 +7,6 @@ module.exports = function(_, moment) {
 
   function ManufactureController($scope, $log, $http) {
 
-    function findEntity(inventory, reservationId) {
-      return _.find(makeInventoryReservationRows(inventory), function(e) {
-        return reservationId === e.reservation.id;
-      });
-    }
 
     function makeInventoryReservationRows(inventory) {
       if (!inventory) {
@@ -33,50 +28,6 @@ module.exports = function(_, moment) {
     }
 
 
-    $scope.isInventoryReceivable = function() {
-      return false;
-    };
-
-    $scope.receiveInventory = function() {};
-
-    $scope.isCleanable = function() {
-      return false;
-    };
-
-    $scope.sendToCleaners = function() {};
-
-    $scope.$on('ngGridEventEndCellEdit', function(evt) {
-      var row = evt.targetScope.row;
-      var entity = row.entity;
-      //FIXME this logic is duplicated in the client/js/controllers/order and here and the Order model :(
-      if (entity.inventory.itemDescription[0].size.match) {
-        entity.inventory.itemDescription[0].size = entity.inventory.itemDescription[0].size.match(/\d+/g);
-      }
-
-      $http
-        .put('/inventory/' + entity.inventory._id, entity.inventory)
-        .success(function(data, status) {
-          $scope.success.message = 'Saved inventory data.';
-          $log.info('Saved inventory=%s, status=%s, data=%O', entity.inventory.tagId, status, data);
-          var e = findEntity(data.inventory, entity.reservation.id);
-          if (e) {
-            $log.info('Found entity=%O', e);
-            row.entity = e;
-          }
-        }).error(function(data, status) {
-          $log.error(
-            'Could not save inventory=%s, status=%s, data=%O',
-            entity.inventory.tagId, status, data);
-          var e = findEntity(data, entity.reservation.id);
-          if (e) {
-            $log.info('Found entity=%O', e);
-            row.entity = e;
-          }
-        });
-
-    });
-
-
     $scope.enteredInventoryForStyle = '';
     $scope.enteredInventoryForColor = '';
     $scope.enteredInventoryForSize = '';
@@ -86,6 +37,7 @@ module.exports = function(_, moment) {
 
     $scope.inventoryQuery = {
       inclusive: false,
+      hideSent: true,
       createdOn: null,
       inventoryForDate: null,
       style: null,
@@ -148,6 +100,10 @@ module.exports = function(_, moment) {
       $scope.all();
     }));
 
+    $scope.$watch('inventoryQuery.hideSent', function() {
+      $scope.all();
+    });
+
     $scope.$watch('inventoryQuery.limitTo', function() {
       $scope.all();
     });
@@ -191,6 +147,35 @@ module.exports = function(_, moment) {
       $scope.all();
     };
 
+    $scope.manufactureInventory = function() {
+      var sel = $scope.inventorySelections;
+      if (sel.length === 0) {
+        $log.error('No inventory selected to manufacture');
+        return;
+      }
+
+      var data = _.map(sel, function(s) {
+        return {
+          orderNumber: s.reservation.orderNumber,
+          inventory: s.inventory.id
+        };
+      });
+
+      $log.debug('About to send to manufacturer inventory=%O', data);
+
+      $http
+        .post('/manufacture', data)
+        .success(function(data, status) {
+          $log.info('Fetched inventory=%O, status=%s', data, status);
+          _.assign($scope.success, data);
+          $scope.all();
+        })
+        .error(function(data, status) {
+          $log.error('Failed to send inventory to manufacturer data=%O, status=%s', data, status);
+          $scope.error.message = 'Failed to send inventory to manufacturer';
+        });
+    };
+
     $scope.all = function() {
       var iq = $scope.inventoryQuery;
       var config = { params: iq };
@@ -204,7 +189,7 @@ module.exports = function(_, moment) {
         }).error(function(data, status) {
           if (status === 404) {
             $scope.inventoryData = [];
-            $scope.info.message = 'No inventory found.';
+            $scope.info.message = 'No inventory found to manufacture.';
             return;
           }
           $log.error('Failed to fetch inventory data=%O, status=%s', data, status);
@@ -217,21 +202,24 @@ module.exports = function(_, moment) {
     $scope.gridOptions = {
       data: 'inventoryData',
       selectedItems: $scope.inventorySelections,
+      pinSelectionCheckbox: true,
+      selectWithCheckboxOnly: true,
+      showSelectionCheckbox: true,
       showGroupPanel: true,
       jqueryUIDraggable: true,
-      enableCellSelection: true,
-      multiSelect: false,
+      enableCellSelection: false,
+      multiSelect: true,
       // enablePinning: true,  //does not work with grouping :(
       showFilter: true,
       showColumnMenu: true,
-      enableCellEdit: true,
+      enableCellEdit: false,
       enableColumnResize: true,
       enableColumnReordering: true,
       sortInfo: { fields: ['reservation.reservationStart'], directions: ['desc']},
       columnDefs: [
         {field:'inventory.tagId', displayName:'Tag Id', enableCellEdit: true, width: 100},
         {field:'inventory.productNumber', displayName:'Prod #', enableCellEdit: true, width: 80},
-        {field:'inventory.manufacturedOn', displayName:'Manufactured On', enableCellEdit: false, width: 110, cellFilter: 'date'},
+        {field:'inventory.manufactureRequestedOn', displayName:'Manufacture Requested On', enableCellEdit: false, width: 110, cellFilter: 'date'},
         {field:'inventory.itemDescription[0].style', displayName:'Style', enableCellEdit: true, width: 70},
         {field:'inventory.itemDescription[0].color', displayName:'Color', enableCellEdit: true, width: 70},
         {field:'inventory.itemDescription[0].size', displayName:'Size', enableCellEdit: true, width: 70, cellFilter: 'join:" | "'},
@@ -246,37 +234,6 @@ module.exports = function(_, moment) {
         {field:'reservation.name', displayName: 'Name', enableCellEdit: false, width: 150},
         {field:'reservation.email', displayName: 'Email', enableCellEdit: false, width: 150},
         {field:'reservation.telephone', displayName: 'Phone', enableCellEdit: false, width: 100},
-      ]
-    };
-
-    function makeReservationData() {
-      if (!$scope.inventorySelections.length) {
-        return;
-      }
-      $log.info('inventorySelections=%O', $scope.inventorySelections);
-      $scope.reservationData = $scope.inventorySelections[0].inventory.reservations;
-    }
-
-    $scope.$watchCollection('inventorySelections', makeReservationData);
-
-    $scope.reservationData = [];
-
-    $scope.resGridOptions = {
-      data: 'reservationData',
-      enableCellSelection: false,
-      multiSelect: false,
-      enableColumnResize: true,
-      enableColumnReordering: false,
-      columnDefs: [
-        {field:'type', displayName:'Type', width: 80, enableCellEdit: false},
-        {field:'reservationStart', displayName:'Start', width: 100, enableCellEdit: false, cellFilter: 'date'},
-        {field:'reservationEnd', displayName:'End', width: 100, enableCellEdit: false, cellFilter: 'date'},
-        {field:'forDate', displayName:'For Date', width: 100, enableCellEdit: false, cellFilter: 'date'},
-        {field:'backup', displayName:'Backup', enableCellEdit: false, width: 70},
-        {field:'orderNumber', displayName:'Order', enableCellEdit: false, width: 90},
-        {field:'name', displayName: 'Name', enableCellEdit: false, width: 150},
-        {field:'email', displayName: 'Email', enableCellEdit: false, width: 150},
-        {field:'telephone', displayName: 'Phone', enableCellEdit: false, width: 100},
       ]
     };
 
@@ -310,25 +267,6 @@ module.exports = function(_, moment) {
 
     $scope.clearError = function() {
       $scope.error.message = null;
-    };
-
-    $scope.isUploading = false;
-    $scope.startUploading = function() {
-      $scope.isUploading = true;
-    };
-
-    $scope.isUploading = false;
-    $scope.startUploading = function() {
-      $scope.isUploading = true;
-    };
-
-    $scope.uploadComplete = function(results) {
-      $log.info('Completed upload of results=%O', results);
-      $scope.isUploading = false;
-      global.jQuery('#uploadInventoryModal').modal('hide');
-
-      _.assign($scope.error, results.error);
-      $scope.inventoryData = makeInventoryReservationRows(results.inventory);
     };
   }
 

@@ -59,6 +59,10 @@
   "scripts": {
     "install": "napa",
     "dev": "nodemon -w server",
+    "rabbitmq": "rabbitmq-server -detached",
+    "rabbitmq-stop": "rabbitmqctl stop",
+    "mongo": "mongod --fork --logpath ./logs/mongodb.log --pidfilepath /tmp/mongo.pid --dbpath ./data/. ",
+    "mongo-stop": "kill `cat /tmp/mongo.pid` && rm /tmp/mongo.pid",
     "start": "node server",
     "autotest": "jasmine-node test/spec --autotest --watch server",
     "test": "istanbul test jasmine-node spec/",

@@ -16,3 +16,4 @@ data
 *.sublime-*
 .DS_Store
 tmp
+logs/**

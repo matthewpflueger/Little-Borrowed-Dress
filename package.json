@@ -74,8 +74,8 @@
     "plato-server": "mkdir -p build/server/analysis && plato -r -d build/server/analysis -l .jshintrc -t 'Server Code Complexity' server;",
     "cr-client": "mkdir -p build/client/analysis && cr -n -M 60 -f json -o build/client/analysis/cr.json client/scripts/*",
     "cr-server": "mkdir -p build/server/analysis && cr -n -M 60 -f json -o build/server/analysis/cr.json server/*",
-    "jshint-client": "jshint client/scripts/*",
-    "jshint-server": "jshint server/*",
+    "jshint-client": "jshint --verbose client/scripts/*",
+    "jshint-server": "jshint --verbose server/*",
     "jshint": "npm run jshint-client && npm run jshint-server"
   },
   "napa": {
